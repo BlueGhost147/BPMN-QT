@@ -29,11 +29,11 @@ public class BpmnXmlService {
             "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd"
     };
 
-    public void validateXML(String xmlFilePath)
-    {
-        Arrays.stream(xmlSchemas).forEach(xmlSchema ->{
+    public void validateXML(String xmlFilePath) {
+        Arrays.stream(xmlSchemas).forEach(xmlSchema -> {
             try {
-                validateXml(xmlFilePath, xmlSchema);
+                List<SAXParseException> xmlExceptions = validateXml(xmlFilePath, xmlSchema);
+                xmlExceptions.forEach(e -> LogService.logEvent("BpmnXmlService", e.getMessage()));
             } catch (IOException | SAXException e) {
                 LogService.logEvent("BpmnXmlService", e.getMessage());
                 //e.printStackTrace();
@@ -43,59 +43,57 @@ public class BpmnXmlService {
 
     /**
      * Validate one XML File via a given Schema
+     *
      * @param xmlFilePath - Filepath of the XML file to validate
      * @param xsdFilePath - Filepath of the XML schema
      * @throws MalformedURLException - URL of the Schema not valid
-     * @throws SAXException - Schema file failed to load
+     * @throws SAXException          - Schema file failed to load
      */
-    private void validateXml(String xmlFilePath, String xsdFilePath) throws IOException, SAXException {
+    private List<SAXParseException> validateXml(String xmlFilePath, String xsdFilePath) throws IOException, SAXException {
         Source xmlFile = loadXmlFile(xmlFilePath);
         Schema schema = loadXmlSchema(xsdFilePath);
 
         Validator validator = schema.newValidator();
         final List<SAXParseException> exceptions = new LinkedList<SAXParseException>();
-        validator.setErrorHandler(new ErrorHandler()
-        {
+        validator.setErrorHandler(new ErrorHandler() {
             @Override
-            public void warning(SAXParseException exception) throws SAXException
-            {
+            public void warning(SAXParseException exception) throws SAXException {
                 exceptions.add(exception);
             }
 
             @Override
-            public void fatalError(SAXParseException exception) throws SAXException
-            {
+            public void fatalError(SAXParseException exception) throws SAXException {
                 exceptions.add(exception);
             }
 
             @Override
-            public void error(SAXParseException exception) throws SAXException
-            {
+            public void error(SAXParseException exception) throws SAXException {
                 exceptions.add(exception);
             }
         });
 
         validator.validate(xmlFile);
 
-        exceptions.forEach(e -> System.out.println(e.getMessage()));
+        return exceptions;
     }
 
     /**
      * Loads a XML File a given path
+     *
      * @param xmlFilePath - Filepath of the XML
      * @return XML as StreamSource
      */
-    private Source loadXmlFile(String xmlFilePath)
-    {
+    private Source loadXmlFile(String xmlFilePath) {
         return new StreamSource(new File(xmlFilePath));
     }
 
     /**
      * Load a XML Schema via a given path
+     *
      * @param schemaPath - XML Schema path
      * @return XML Schema
      * @throws MalformedURLException - URL not valid
-     * @throws SAXException - File failed to load
+     * @throws SAXException          - File failed to load
      */
     private Schema loadXmlSchema(String schemaPath) throws MalformedURLException, SAXException {
         SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
