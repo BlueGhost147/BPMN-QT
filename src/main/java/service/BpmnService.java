@@ -1,34 +1,26 @@
 package service;
 
-import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
-import org.camunda.bpm.model.xml.ModelParseException;
+import org.camunda.bpm.model.xml.instance.ModelElementInstance;
+import org.camunda.bpm.model.xml.type.ModelElementType;
 
-import java.io.File;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class BpmnService {
+
     /**
-     * Loads a BPMN Model from a given path
-     * @param pathname - Path of the BPMN Model
-     * @return Loaded BpmnModelInstance
+     * @param elementClass - Search Class Type
+     * @return Collection of all found ModelElementInstances
      */
-    public static Optional<BpmnModelInstance> loadDiagram(String pathname) {
-        LogService.logEvent("BpmnService", "Try to load diagram from " + pathname);
-        try {
-            // Load file
-            File bpmnModelFile = new File(pathname);
-            BpmnModelInstance bpmnModelInstance = Bpmn.readModelFromFile(bpmnModelFile);
-
-            // DOM validation
-            Bpmn.validateModel(bpmnModelInstance);
-
-            LogService.logEvent("BpmnService", "Loaded successful");
-
-            return Optional.of(bpmnModelInstance);
-        } catch (ModelParseException saxE) {
-            LogService.logEvent("BpmnService", "Error while loading: " + saxE.getMessage());
-            return Optional.empty();
+    public Collection<ModelElementInstance> findElementsByType(BpmnModelInstance bpmnModel, Class<? extends ModelElementInstance> elementClass) {
+        if (bpmnModel == null || elementClass == null) {
+            LogService.logEvent("BpmnService" ,"findElementByType - Search called with invalid parameters!");
+            return new ArrayList<>();
         }
+        ModelElementType searchType = bpmnModel.getModel().getType(elementClass);
+        Collection<ModelElementInstance> elementInstances = bpmnModel.getModelElementsByType(searchType);
+        LogService.logEvent("BpmnService", "findElementByType - Searching for " + elementClass.getName() + " in '" + bpmnModel.getModel().getModelName() + "' found " + elementInstances.size());
+        return elementInstances;
     }
 }

@@ -22,23 +22,25 @@ import java.io.IOException;
 public class BpmnXmlService {
 
     private static final String[] xmlSchemas = new String[]{
-            "https://www.omg.org/spec/BPMN/20100501/BPMN20.xsd",
-            "https://www.omg.org/spec/BPMN/20100501/BPMNDI.xsd",
-            "https://www.omg.org/spec/BPMN/20100501/DC.xsd",
-            "https://www.omg.org/spec/BPMN/20100501/DI.xsd",
+            //"https://www.omg.org/spec/BPMN/20100501/BPMN20.xsd",
+            //"https://www.omg.org/spec/BPMN/20100501/BPMNDI.xsd",
+            //"https://www.omg.org/spec/BPMN/20100501/DC.xsd",
+            //"https://www.omg.org/spec/BPMN/20100501/DI.xsd",
             "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd"
     };
 
     public void validateXML(String xmlFilePath) {
+        LogService.logEvent("BpmnXmlService", "Start XML Validation");
         Arrays.stream(xmlSchemas).forEach(xmlSchema -> {
             try {
                 List<SAXParseException> xmlExceptions = validateXml(xmlFilePath, xmlSchema);
                 xmlExceptions.forEach(e -> LogService.logEvent("BpmnXmlService", e.getMessage()));
             } catch (IOException | SAXException e) {
                 LogService.logEvent("BpmnXmlService", e.getMessage());
-                //e.printStackTrace();
             }
         });
+
+        LogService.logLine("BpmnXmlService");
     }
 
     /**
