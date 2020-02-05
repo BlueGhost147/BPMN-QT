@@ -19,12 +19,15 @@ public class LogService {
 
     /**
      * Log the message the console and to the given textArea
-     * @param logMessage
+     *
+     * @param logMessage - Message which should be logged
      */
-    private static void log(String logMessage)
-    {
+    private static void log(String logMessage) {
         if (BpmnQtConfig.logging) {
-            if (textArea != null) textArea.appendText(logMessage + "\n");
+            if (textArea != null) {
+                javafx.application.Platform.runLater( () -> textArea.appendText(logMessage + "\n") );
+                //textArea.appendText(logMessage + "\n");
+            }
             System.out.println(logMessage);
         }
     }

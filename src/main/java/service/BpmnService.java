@@ -1,6 +1,8 @@
 package service;
 
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import org.camunda.bpm.model.bpmn.instance.FlowNode;
+import org.camunda.bpm.model.bpmn.instance.Participant;
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import org.camunda.bpm.model.xml.type.ModelElementType;
 
@@ -20,7 +22,8 @@ public class BpmnService {
         }
         ModelElementType searchType = bpmnModel.getModel().getType(elementClass);
         Collection<ModelElementInstance> elementInstances = bpmnModel.getModelElementsByType(searchType);
-        LogService.logEvent("BpmnService", "findElementByType - Searching for " + elementClass.getName() + " in '" + bpmnModel.getModel().getModelName() + "' found " + elementInstances.size());
         return elementInstances;
     }
+
+
 }
