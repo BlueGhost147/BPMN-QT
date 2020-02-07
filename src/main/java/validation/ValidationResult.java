@@ -1,19 +1,25 @@
 package validation;
 
+import org.camunda.bpm.model.xml.ModelInstance;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class ValidationResult {
     private boolean valid;
     private List<String> errorMsg;
+    private BpmnRule rule;
+    private ModelInstance modelInstance;
 
-    public ValidationResult(boolean valid) {
+    public ValidationResult(BpmnRule rule, boolean valid) {
         this.valid = valid;
+        this.rule = rule;
         this.errorMsg = new ArrayList<>();
     }
 
-    public ValidationResult(boolean valid, List<String> errorMsg) {
+    public ValidationResult(BpmnRule rule, boolean valid, List<String> errorMsg) {
         this.valid = valid;
+        this.rule = rule;
         this.errorMsg = errorMsg;
     }
 
@@ -30,6 +36,10 @@ public class ValidationResult {
         return errorMsg;
     }
 
+    public BpmnRule getRule() {
+        return rule;
+    }
+
     @Override
     public String toString() {
         return "ValidationResult{" +
@@ -37,5 +47,15 @@ public class ValidationResult {
                 ", errorMsg=" + errorMsg +
                 ", errorMsg=" + errorMsg.size() +
                 '}';
+    }
+
+    public String getFullErrorMsg()
+    {
+        StringBuilder fullErrorMsg = new StringBuilder();
+        for (String error : errorMsg)
+        {
+            fullErrorMsg.append(error).append("\n");
+        }
+        return fullErrorMsg.toString();
     }
 }

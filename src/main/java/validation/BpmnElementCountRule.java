@@ -51,7 +51,7 @@ public class BpmnElementCountRule extends BpmnRule {
                 break;
         }
 
-        ValidationResult result = new ValidationResult(valid);
+        ValidationResult result = new ValidationResult(this, valid);
         if (!valid) {
             result.addError("The element " + elementClass + " exists " + elementCount + " times in the model! Rule: " + operator + " than " + count);
         }
@@ -61,10 +61,6 @@ public class BpmnElementCountRule extends BpmnRule {
 
     @Override
     public String toString() {
-        return "BpmnElementCountRule{" +
-                "count=" + count +
-                ", operator=" + operator +
-                ", elementClass=" + elementClass +
-                '}';
+        return super.toString() + " - " + elementClass + " " + operator + " " + count;
     }
 }

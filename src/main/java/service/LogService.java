@@ -6,14 +6,22 @@ import javafx.scene.control.TextArea;
 
 public class LogService {
 
-    public static TextArea textArea;
+    public TextArea textArea;
 
-    public static void logEvent(String source, String logString) {
-        String logMessage = "[" + source + "] - " + logString;
-        log(logMessage);
+    public LogService() {
+
     }
 
-    public static void logLine(String source) {
+    public LogService(TextArea textArea) {
+        this.textArea = textArea;
+    }
+
+    public void logEvent(String source, String logString) {
+        //String logMessage = "[" + source + "] - " + logString;
+        log(logString);
+    }
+
+    public void logLine(String source) {
         log("--------------------------------------");
     }
 
@@ -22,7 +30,7 @@ public class LogService {
      *
      * @param logMessage - Message which should be logged
      */
-    private static void log(String logMessage) {
+    private void log(String logMessage) {
         if (BpmnQtConfig.logging) {
             if (textArea != null) {
                 javafx.application.Platform.runLater( () -> textArea.appendText(logMessage + "\n") );

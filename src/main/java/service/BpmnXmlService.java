@@ -6,6 +6,7 @@ import org.xml.sax.SAXParseException;
 
 import javax.xml.XMLConstants;
 import javax.xml.transform.Source;
+import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -21,6 +22,7 @@ import java.io.IOException;
 
 public class BpmnXmlService {
 
+
     private static final String[] xmlSchemas = new String[]{
             //"https://www.omg.org/spec/BPMN/20100501/BPMN20.xsd",
             //"https://www.omg.org/spec/BPMN/20100501/BPMNDI.xsd",
@@ -30,29 +32,31 @@ public class BpmnXmlService {
     };
 
     public void validateXML(String xmlFilePath) {
-        LogService.logEvent("BpmnXmlService", "Start XML Validation");
+        //LogService.logEvent("BpmnXmlService", "Start XML Validation");
         Arrays.stream(xmlSchemas).forEach(xmlSchema -> {
             try {
-                List<SAXParseException> xmlExceptions = validateXml(xmlFilePath, xmlSchema);
-                xmlExceptions.forEach(e -> LogService.logEvent("BpmnXmlService", e.getMessage()));
+                List<SAXParseException> xmlExceptions = validateXml(loadXmlFile(xmlFilePath), xmlSchema);
+                //xmlExceptions.forEach(e -> LogService.logEvent("BpmnXmlService", e.getMessage()));
             } catch (IOException | SAXException e) {
-                LogService.logEvent("BpmnXmlService", e.getMessage());
+               // LogService.logEvent("BpmnXmlService", e.getMessage());
             }
         });
 
-        LogService.logLine("BpmnXmlService");
+        //LogService.logLine("BpmnXmlService");
     }
+
+
 
     /**
      * Validate one XML File via a given Schema
      *
-     * @param xmlFilePath - Filepath of the XML file to validate
+     * @param xmlFile - Filesource of the XML file to validate
      * @param xsdFilePath - Filepath of the XML schema
      * @throws MalformedURLException - URL of the Schema not valid
      * @throws SAXException          - Schema file failed to load
      */
-    private List<SAXParseException> validateXml(String xmlFilePath, String xsdFilePath) throws IOException, SAXException {
-        Source xmlFile = loadXmlFile(xmlFilePath);
+    public List<SAXParseException> validateXml(Source xmlFile, String xsdFilePath) throws IOException, SAXException {
+
         Schema schema = loadXmlSchema(xsdFilePath);
 
         Validator validator = schema.newValidator();

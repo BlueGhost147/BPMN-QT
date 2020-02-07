@@ -16,8 +16,9 @@ public class PoolProcessRule extends BpmnRule {
 
     private BpmnService bpmnService = null;
 
-    public PoolProcessRule() {
-        this.bpmnService = new BpmnService();
+    public PoolProcessRule(String name, String description, String ref) {
+        super(name, description, ref);
+        bpmnService = new BpmnService();
     }
 
     @Override
@@ -43,7 +44,11 @@ public class PoolProcessRule extends BpmnRule {
             if (endEventCount == 0)
                 errors.add("The pool " + ((Participant) pool).getName() + " has a process with no end events");
         });
-        return new ValidationResult(errors.size() == 0, errors);
+        return new ValidationResult(this, errors.size() == 0, errors);
     }
 
+    @Override
+    public String toString() {
+        return super.toString();
+    }
 }

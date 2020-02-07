@@ -14,7 +14,8 @@ public class BpmnComplexRule extends BpmnRule {
     private List<BpmnRule> bpmnRuleList;
     private RuleOperator operator;
 
-    public BpmnComplexRule(List<BpmnRule> bpmnRuleList, RuleOperator operator) {
+    public BpmnComplexRule(String name, String description, String ref, List<BpmnRule> bpmnRuleList, RuleOperator operator) {
+        super(name, description, ref);
         this.bpmnRuleList = bpmnRuleList;
         this.operator = operator;
     }
@@ -42,14 +43,11 @@ public class BpmnComplexRule extends BpmnRule {
                 break;
         }
 
-        return new ValidationResult(valid, errors);
+        return new ValidationResult(this, valid, errors);
     }
 
     @Override
     public String toString() {
-        return "BpmnComplexRule{" +
-                "bpmnRuleList=" + bpmnRuleList +
-                ", operator=" + operator +
-                '}';
+        return super.toString() + " - Set of " + bpmnRuleList.size() + " rules.";
     }
 }

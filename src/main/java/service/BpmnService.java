@@ -16,8 +16,13 @@ public class BpmnService {
      * @return Collection of all found ModelElementInstances
      */
     public Collection<ModelElementInstance> findElementsByType(BpmnModelInstance bpmnModel, Class<? extends ModelElementInstance> elementClass) {
+        return findElementsByType(bpmnModel, elementClass, null);
+    }
+
+    public Collection<ModelElementInstance> findElementsByType(BpmnModelInstance bpmnModel, Class<? extends ModelElementInstance> elementClass, LogService logService) {
         if (bpmnModel == null || elementClass == null) {
-            LogService.logEvent("BpmnService" ,"findElementByType - Search called with invalid parameters!");
+            if(logService != null)
+                logService.logEvent("BpmnService" ,"findElementByType - Search called with invalid parameters!");
             return new ArrayList<>();
         }
         ModelElementType searchType = bpmnModel.getModel().getType(elementClass);

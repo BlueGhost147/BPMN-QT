@@ -60,10 +60,6 @@ public abstract class BpmnRule {
 
     @Override
     public String toString() {
-        return "BpmnRule{" +
-                "name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", ref='" + ref + '\'' +
-                '}';
+        return name + " - " + description;
     }
 }
