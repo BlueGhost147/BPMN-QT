@@ -4,18 +4,26 @@ import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.xml.sax.SAXException;
 import service.BpmnXmlService;
 
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.transform.dom.DOMSource;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class XmlValidationRule extends BpmnRule {
+@XmlRootElement(name = "bpmnXmlValidationRule")
+public class BpmnXmlValidationRule extends BpmnRule {
 
+    @XmlTransient
     private BpmnXmlService bpmnXmlService;
     private String xsdPath;
 
-    public XmlValidationRule(String name, String description, String ref, String xsdPath) {
+    public BpmnXmlValidationRule() {
+        bpmnXmlService = new BpmnXmlService();
+    }
+
+    public BpmnXmlValidationRule(String name, String description, String ref, String xsdPath) {
         super(name, description, ref);
         this.xsdPath = xsdPath;
         bpmnXmlService = new BpmnXmlService();
@@ -46,5 +54,13 @@ public class XmlValidationRule extends BpmnRule {
 
     public void setXsdPath(String xsdPath) {
         this.xsdPath = xsdPath;
+    }
+
+    public BpmnXmlService getBpmnXmlService() {
+        return bpmnXmlService;
+    }
+
+    public void setBpmnXmlService(BpmnXmlService bpmnXmlService) {
+        this.bpmnXmlService = bpmnXmlService;
     }
 }

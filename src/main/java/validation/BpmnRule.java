@@ -2,11 +2,16 @@ package validation;
 
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 
-public abstract class BpmnRule {
+import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
+
+@XmlRootElement
+public abstract class BpmnRule implements Serializable {
 
     private String name = "";
     private String description = "";
     private String ref = "";
+    private boolean active = true;
 
     public BpmnRule() {
     }
@@ -56,6 +61,14 @@ public abstract class BpmnRule {
 
     public void setRef(String ref) {
         this.ref = ref;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     @Override

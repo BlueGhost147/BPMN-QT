@@ -5,11 +5,17 @@ import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import service.BpmnService;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement(name = "bpmnElementCountRule")
 public class BpmnElementCountRule extends BpmnRule {
 
     private int count;
     private Operators operator;
     private Class<? extends ModelElementInstance> elementClass;
+
+    public BpmnElementCountRule() {
+    }
 
     public BpmnElementCountRule(
             String name, String desc, String ref,
@@ -57,6 +63,30 @@ public class BpmnElementCountRule extends BpmnRule {
         }
         return result;
 
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
+    }
+
+    public Operators getOperator() {
+        return operator;
+    }
+
+    public void setOperator(Operators operator) {
+        this.operator = operator;
+    }
+
+    public Class<? extends ModelElementInstance> getElementClass() {
+        return elementClass;
+    }
+
+    public void setElementClass(Class<? extends ModelElementInstance> elementClass) {
+        this.elementClass = elementClass;
     }
 
     @Override

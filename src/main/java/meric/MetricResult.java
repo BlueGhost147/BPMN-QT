@@ -2,7 +2,6 @@ package meric;
 
 public class MetricResult {
     private int value;
-    private Trend trend;
     private BpmnMetric bpmnMetric;
 
     public MetricResult(int value, BpmnMetric bpmnMetric) {
@@ -18,13 +17,6 @@ public class MetricResult {
         this.value = value;
     }
 
-    public Trend getTrend() {
-        return trend;
-    }
-
-    public void setTrend(Trend trend) {
-        this.trend = trend;
-    }
 
     public BpmnMetric getBpmnMetric() {
         return bpmnMetric;

@@ -9,14 +9,22 @@ import org.camunda.bpm.model.bpmn.instance.StartEvent;
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import service.BpmnService;
 
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class PoolProcessRule extends BpmnRule {
+@XmlRootElement(name = "bpmnPoolProcessRule")
+public class BpmnPoolProcessRule extends BpmnRule {
 
+    @XmlTransient
     private BpmnService bpmnService = null;
 
-    public PoolProcessRule(String name, String description, String ref) {
+    public BpmnPoolProcessRule() {
+        bpmnService = new BpmnService();
+    }
+
+    public BpmnPoolProcessRule(String name, String description, String ref) {
         super(name, description, ref);
         bpmnService = new BpmnService();
     }

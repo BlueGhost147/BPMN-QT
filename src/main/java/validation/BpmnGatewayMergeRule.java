@@ -6,6 +6,8 @@ import org.camunda.bpm.model.bpmn.instance.Gateway;
 import org.camunda.bpm.model.xml.ModelException;
 import service.BpmnService;
 
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -13,11 +15,17 @@ import java.util.stream.Collectors;
 /**
  * Verzweigungen von Sequenzflüssen aus einer Aktivität erfolgen nicht direkt sondern über einen Gateway
  */
-public class GatewayMergeRule extends BpmnRule {
+@XmlRootElement(name = "bpmnGatewayMergeRule")
+public class BpmnGatewayMergeRule extends BpmnRule {
 
+    @XmlTransient
     private BpmnService bpmnService;
 
-    public GatewayMergeRule(String name, String description, String ref) {
+    public BpmnGatewayMergeRule() {
+        bpmnService = new BpmnService();
+    }
+
+    public BpmnGatewayMergeRule(String name, String description, String ref) {
         super(name, description, ref);
         bpmnService = new BpmnService();
     }
@@ -41,6 +49,14 @@ public class GatewayMergeRule extends BpmnRule {
             errors.add(e.getMessage());
             return new ValidationResult(this, false, errors);
         }
+    }
+
+    public BpmnService getBpmnService() {
+        return bpmnService;
+    }
+
+    public void setBpmnService(BpmnService bpmnService) {
+        this.bpmnService = bpmnService;
     }
 
     @Override

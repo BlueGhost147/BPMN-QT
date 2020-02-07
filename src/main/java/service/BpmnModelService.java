@@ -13,7 +13,7 @@ public class BpmnModelService {
      * @param pathname - Path of the BPMN Model
      * @return Loaded BpmnModelInstance
      */
-    public Optional<BpmnModelInstance> loadDiagram(String pathname, LogService logService) {
+    public static Optional<BpmnModelInstance> loadDiagram(String pathname, LogService logService) {
         logService.logEvent("BpmnModelService", "Try to load diagram from " + pathname);
         try {
             // Load file
