@@ -1,67 +1,75 @@
 package sample;
 
+import enums.Operators;
+import enums.RuleOperator;
 import javafx.application.Application;
 import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import meric.BpmnMetric;
 import meric.MetricResult;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import org.camunda.bpm.model.bpmn.instance.*;
+import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import service.BpmnModelService;
-import service.BpmnService;
-import service.BpmnXmlService;
 import service.LogService;
-import validation.BpmnRule;
-import validation.RuleList;
-import validation.ValidationResult;
-import validation.BpmnXmlValidationRule;
-import xmlexport.XmlRuleService;
+import validation.*;
+import service.XmlRuleImportExportService;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 public class Main extends Application {
 
+    // Bpmn analyse instance
     private BpmnAnalyser bpmnAnalyser;
 
     // Tabpane of the application
-    TabPane mainTab;
+    private TabPane mainTab;
 
     // List where all rules are displayed
-    VBox ruleList;
+    private VBox ruleList;
 
-    FileChooser ruleFileChooser;
+    // File chooser for rule import / export
+    private FileChooser ruleFileChooser;
 
-    Stage primaryStage;
+    // Primary Window of the application
+    private Stage primaryStage;
 
-    File lastBpmnPath = null;
-    File lastRulePath = null;
+    // Store the path of the file chooser for convenience
+    private File lastBpmnPath = null;
+    private File lastRulePath = null;
+
+    // Rule tabPane which is currently expanded ->
+    // undo expanding if another pane gets expanded
+    private TitledPane curentRuleExpandable;
+
+    // Rule list
+    private HBox ruleActionLayout = null;
+    private HBox newRuleLayout = null;
 
     public static void main(String[] args) {
         launch(args);
     }
 
-    // Stage = Gesamtes Fenster
-    // Scene = Das was gerade angezeigt wird
     @Override
     public void start(Stage primaryStage) throws Exception {
-        //Parent root = FXMLLoader.load(getClass().getResource("../main.fxml"));
-        // primaryStage.setScene(new Scene(root, 400, 400));
 
         primaryStage.setTitle("BPMN QT");
 
@@ -76,7 +84,6 @@ public class Main extends Application {
 
         primaryStage.setScene(new Scene(mainTab, 1000, 600));
         LogService mainTabLogService = new LogService();
-        // setupLogArea(splitPane, mainTabLogService);
 
         primaryStage.show();
 
@@ -87,6 +94,7 @@ public class Main extends Application {
         );
 
         Button button = new Button("Select BPMN file");
+        button.setPadding(new Insets(5,5,5,5));
         button.setOnAction(e -> {
             if (lastBpmnPath != null)
                 bpmnFileChooser.setInitialDirectory(lastBpmnPath);
@@ -105,7 +113,7 @@ public class Main extends Application {
         bpmnAnalyser = new BpmnAnalyser();
         //bpmnAnalyser.createTestRules();
 
-        ruleList = createRuleList();
+        ruleList = new VBox();
         ruleFileChooser = new FileChooser();
         ruleFileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("QT rule files", "*.qtrules")
@@ -113,12 +121,7 @@ public class Main extends Application {
         refreshRuleList();
 
         splitPane.getItems().add(ruleList);
-
-        //doBpmnAnalysisForFolder("C:\\FH\\BPMN");
     }
-
-
-    private HBox ruleActionLayout = null;
 
     /**
      * Refresh the rule list on the mainTab
@@ -129,52 +132,41 @@ public class Main extends Application {
         if (ruleActionLayout == null) {
             ruleActionLayout = new HBox();
             ruleActionLayout.setSpacing(5);
-            Button loadRules = new Button("Import rules");
-            loadRules.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent event) {
-                    if (lastRulePath != null)
-                        ruleFileChooser.setInitialDirectory(lastRulePath.getParentFile());
-                    File selectedFile = ruleFileChooser.showOpenDialog(primaryStage);
-                    lastRulePath = selectedFile;
-                    if (selectedFile != null) {
-                        bpmnAnalyser.setRules(XmlRuleService.jaxbXmlFileToObject(selectedFile.getAbsolutePath()));
-                        refreshRuleList();
-                    }
 
+            Button loadRules = new Button("Import rules");
+            loadRules.setOnAction(event -> {
+                if (lastRulePath != null)
+                    ruleFileChooser.setInitialDirectory(lastRulePath.getParentFile());
+                File selectedFile = ruleFileChooser.showOpenDialog(primaryStage);
+                lastRulePath = selectedFile;
+                if (selectedFile != null) {
+                    bpmnAnalyser.setRules(XmlRuleImportExportService.loadRulesFromXML(selectedFile.getAbsolutePath()));
+                    refreshRuleList();
                 }
+
             });
             Button saveRules = new Button("Export rules");
-            saveRules.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent event) {
-                    if (lastRulePath != null)
-                        ruleFileChooser.setInitialDirectory(lastRulePath.getParentFile());
-                    File saveFile = ruleFileChooser.showSaveDialog(primaryStage);
+            saveRules.setOnAction(event -> {
+                if (lastRulePath != null)
+                    ruleFileChooser.setInitialDirectory(lastRulePath.getParentFile());
+                File saveFile = ruleFileChooser.showSaveDialog(primaryStage);
 
-                    if (saveFile != null) {
-                        lastRulePath = saveFile;
-                        XmlRuleService.jaxbObjectToXML(bpmnAnalyser.getRules(), saveFile.getPath());
-                    }
+                if (saveFile != null) {
+                    lastRulePath = saveFile;
+                    XmlRuleImportExportService.saveRulesToXML(bpmnAnalyser.getRules(), saveFile.getPath());
                 }
             });
 
             Button createTestRules = new Button("Create test rules");
-            createTestRules.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent event) {
-                    bpmnAnalyser.createTestRules();
-                    refreshRuleList();
-                }
+            createTestRules.setOnAction(event -> {
+                bpmnAnalyser.createTestRules();
+                refreshRuleList();
             });
 
             Button clearRules = new Button("Clear rules");
-            clearRules.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent event) {
-                    bpmnAnalyser.setRules(new RuleList());
-                    refreshRuleList();
-                }
+            clearRules.setOnAction(event -> {
+                bpmnAnalyser.setRules(new RuleList());
+                refreshRuleList();
             });
 
 
@@ -182,67 +174,251 @@ public class Main extends Application {
             ruleActionLayout.getChildren().add(saveRules);
             ruleActionLayout.getChildren().add(createTestRules);
             ruleActionLayout.getChildren().add(clearRules);
+
+            newRuleLayout = new HBox();
+
+            // Create new rule choice box and add rules types
+            ChoiceBox<Class<? extends BpmnRule>> ruleTypesChoise = new ChoiceBox<>();
+            ruleTypesChoise.getItems().add(BpmnElementCountRule.class);
+            ruleTypesChoise.getItems().add(BpmnGatewayMergeRule.class);
+            ruleTypesChoise.getItems().add(BpmnXmlValidationRule.class);
+            ruleTypesChoise.getItems().add(BpmnSoundnessRule.class);
+            ruleTypesChoise.getItems().add(BpmnPoolProcessRule.class);
+            ruleTypesChoise.getItems().add(BpmnComplexRule.class);
+            ruleTypesChoise.getItems().add(BpmnOntologyValidationRule.class);
+            ruleTypesChoise.getItems().add(BpmnMetricRule.class);
+
+            // Set default value
+            ruleTypesChoise.setValue(BpmnElementCountRule.class);
+
+            Button addNewRule = new Button("Add new rules");
+            addNewRule.setOnAction(event -> {
+
+                BpmnRule newRule = null;
+                if(ruleTypesChoise.getValue() == BpmnElementCountRule.class)
+                    newRule = new BpmnElementCountRule("New count rule","","",0,Operators.equal,Activity.class);
+                if(ruleTypesChoise.getValue() == BpmnGatewayMergeRule.class)
+                    newRule = new BpmnGatewayMergeRule("New gateway rule","","");
+                if(ruleTypesChoise.getValue() == BpmnXmlValidationRule.class)
+                    newRule = new BpmnXmlValidationRule("New xml validation rule","","","");
+                if(ruleTypesChoise.getValue() == BpmnSoundnessRule.class)
+                    newRule = new BpmnSoundnessRule("New soundness rule","","");
+                if(ruleTypesChoise.getValue() == BpmnPoolProcessRule.class)
+                    newRule = new BpmnPoolProcessRule("New valid pool rule","","");
+                if(ruleTypesChoise.getValue() == BpmnComplexRule.class)
+                    newRule = new BpmnComplexRule("New complex rule","","", RuleOperator.AND);
+                if(ruleTypesChoise.getValue() == BpmnOntologyValidationRule.class)
+                    newRule = new BpmnOntologyValidationRule("New ontology rule","","","");
+                if(ruleTypesChoise.getValue() == BpmnMetricRule.class)
+                    newRule = new BpmnMetricRule("New metric rule","","",0,Operators.equal,null);
+
+
+                if(newRule != null)
+                {
+                    bpmnAnalyser.getRules().getRules().add(newRule);
+                    refreshRuleList();
+                }
+
+            });
+
+            newRuleLayout.getChildren().add(ruleTypesChoise);
+            newRuleLayout.getChildren().add(addNewRule);
         }
+
         ruleList.getChildren().add(ruleActionLayout);
+        ruleList.getChildren().add(newRuleLayout);
 
         // Display rules
         RuleList rules = bpmnAnalyser.getRules();
         rules.getRules().forEach(rule -> {
-
             TitledPane ruleExpandable = new TitledPane();
-            ruleExpandable.setText(rule.toString());
+            ruleExpandable.setText(rule.getName());
             ruleExpandable.setExpanded(false);
+            ruleExpandable.setStyle(rule.isActive() ? "-fx-color: lightgray" : "-fx-color: white");
+            //if (!rule.isActive()) ruleExpandable.setStyle("-fx-strikethrough: true;");
 
-            ruleExpandable.setContent(createRuleTileContent(rule));
+            // Only one rule pane should be expanded at the same time
+            ruleExpandable.expandedProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue) {
+                    if (curentRuleExpandable != null) {
+                        curentRuleExpandable.setExpanded(false);
+                    }
+                    curentRuleExpandable = ruleExpandable;
+                } else {
+                    if (curentRuleExpandable == ruleExpandable)
+                        curentRuleExpandable = null;
+                }
+            });
 
-            //TextField ruleTextField = new TextField(rule.toString());
-            //ruleTextField.setEditable(false);
+            ruleExpandable.setContent(createRuleTileContent(rule, ruleExpandable));
+
             ruleList.getChildren().add(ruleExpandable);
         });
     }
 
-    private Node createRuleTileContent(final BpmnRule rule) {
-        VBox ruleNode = new VBox();
-        ObservableList<Node> roleNodeChildren = ruleNode.getChildren();
+    private Node createRuleTileContent(final BpmnRule rule, TitledPane rulePane) {
+        GridPane ruleNode = new GridPane();
+        ruleNode.setHgap(5);
+        ruleNode.setVgap(5);
+        ruleNode.setPadding(new Insets(5, 5, 5, 5));
+        // ObservableList<Node> roleNodeChildren = ruleNode.getChildren();
 
+        int rowC = 0;
+
+        final Label labelName = new Label("Name");
         final TextField textFieldName = new TextField(rule.getName());
-        roleNodeChildren.add(textFieldName);
+        textFieldName.textProperty().addListener((observable, oldValue, newValue) -> {
+            rule.setName(newValue);
+            rulePane.setText(newValue);
+        });
+        ruleNode.add(labelName, 0, rowC);
+        ruleNode.add(textFieldName, 1, rowC++);
 
+        final Label labelDesc = new Label("Description");
         final TextField textFieldDesc = new TextField(rule.getDescription());
-        roleNodeChildren.add(textFieldDesc);
+        textFieldDesc.textProperty().addListener((observable, oldValue, newValue) -> rule.setDescription(newValue));
+        ruleNode.add(labelDesc, 0, rowC);
+        ruleNode.add(textFieldDesc, 1, rowC++);
 
+        final Label labelSource = new Label("Source");
         final TextField textFieldSource = new TextField(rule.getRef());
-        roleNodeChildren.add(textFieldSource);
+        textFieldSource.textProperty().addListener((observable, oldValue, newValue) -> rule.setRef(newValue));
+        ruleNode.add(labelSource, 0, rowC);
+        ruleNode.add(textFieldSource, 1, rowC++);
 
         if (rule instanceof BpmnXmlValidationRule) {
-            BpmnXmlValidationRule xmlValidationRule = (BpmnXmlValidationRule) rule;
+            final BpmnXmlValidationRule xmlValidationRule = (BpmnXmlValidationRule) rule;
+
+            final Label labelXSDPath = new Label("XSD Path");
             TextField textFieldXSD = new TextField(xmlValidationRule.getXsdPath());
-            roleNodeChildren.add(textFieldXSD);
+            textFieldXSD.textProperty().addListener((observable, oldValue, newValue) -> xmlValidationRule.setXsdPath(newValue));
+            ruleNode.add(labelXSDPath, 0, rowC);
+            ruleNode.add(textFieldXSD, 1, rowC++);
+        }
+        else if (rule instanceof BpmnOntologyValidationRule) {
+            final BpmnOntologyValidationRule ontologyValidationRule = (BpmnOntologyValidationRule) rule;
+
+            final Label labelOntologyPath = new Label("Ontology Path");
+            TextField textFieldOntology = new TextField(ontologyValidationRule.getOntologyPath());
+            textFieldOntology.textProperty().addListener((observable, oldValue, newValue) -> ontologyValidationRule.setOntologyPath(newValue));
+            ruleNode.add(labelOntologyPath, 0, rowC);
+            ruleNode.add(textFieldOntology, 1, rowC++);
+        }
+        else if (rule instanceof BpmnComplexRule) {
+            final BpmnComplexRule complexRule = (BpmnComplexRule) rule;
+
+            for (BpmnRule ruleCR : complexRule.getBpmnRuleList()) {
+                Label ruleLabel = new Label(ruleCR.getName());
+
+
+                Button rmRule = new Button("x");
+                rmRule.setOnAction(new EventHandler<ActionEvent>() {
+                    @Override
+                    public void handle(ActionEvent event) {
+                        complexRule.getBpmnRuleList().remove(rmRule);
+                        ruleLabel.setText("[removed] " + rule.getName());
+                        rmRule.setVisible(false);
+                    }
+                });
+                ruleNode.add(rmRule, 0, rowC);
+                ruleNode.add(ruleLabel, 1, rowC++);
+
+            }
+
+            final Label labelOperator = new Label("Operator");
+            final ChoiceBox<RuleOperator> choiseBoxOperator = new ChoiceBox<>();
+            choiseBoxOperator.getItems().setAll(RuleOperator.values());
+            choiseBoxOperator.setValue(complexRule.getOperator());
+            choiseBoxOperator.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> complexRule.setOperator(newValue));
+            ruleNode.add(labelOperator, 0, rowC);
+            ruleNode.add(choiseBoxOperator, 1, rowC++);
+        } else if (rule instanceof BpmnElementCountRule) {
+            final BpmnElementCountRule bpmnElementCountRule = (BpmnElementCountRule) rule;
+
+            final Label labelCount = new Label("Count");
+            TextField textFieldCount = new TextField(bpmnElementCountRule.getCount() + "");
+            textFieldCount.textProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue.equals("")) {
+                    textFieldCount.setText("0");
+                    bpmnElementCountRule.setCount(0);
+                } else {
+                    try {
+                        int newValInt = Integer.parseInt(newValue);
+                        bpmnElementCountRule.setCount(newValInt);
+                    } catch (NumberFormatException e) {
+                        textFieldCount.setText(oldValue);
+                    }
+                }
+            });
+            ruleNode.add(labelCount, 0, rowC);
+            ruleNode.add(textFieldCount, 1, rowC++);
+
+            final Label labelOperator = new Label("Operator");
+            final ChoiceBox<Operators> choiseBoxOperator = new ChoiceBox<>();
+            choiseBoxOperator.getItems().setAll(Operators.values());
+            choiseBoxOperator.setValue(bpmnElementCountRule.getOperator());
+            choiseBoxOperator.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> bpmnElementCountRule.setOperator(newValue));
+            ruleNode.add(labelOperator, 0, rowC);
+            ruleNode.add(choiseBoxOperator, 1, rowC++);
+
+            final Label labelElement = new Label("Element Type");
+            final ChoiceBox<Class<? extends ModelElementInstance>> choiseBoxElement = new ChoiceBox<>();
+            choiseBoxElement.getItems().add(Event.class);
+            choiseBoxElement.getItems().add(StartEvent.class);
+            choiseBoxElement.getItems().add(EndEvent.class);
+            choiseBoxElement.getItems().add(Gateway.class);
+            choiseBoxElement.getItems().add(ExclusiveGateway.class);
+            choiseBoxElement.getItems().add(ParallelGateway.class);
+            choiseBoxElement.getItems().add(Activity.class);
+            choiseBoxElement.getItems().add(Participant.class);
+            choiseBoxElement.getItems().add(SequenceFlow.class);
+            choiseBoxElement.setValue(bpmnElementCountRule.getElementClass());
+            choiseBoxElement.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> bpmnElementCountRule.setElementClass(newValue));
+
+            ruleNode.add(labelElement, 0, rowC);
+            ruleNode.add(choiseBoxElement, 1, rowC++);
+
+
         }
 
+        HBox ruleActions = new HBox();
+        ruleActions.setSpacing(10);
+
+        /*
         Button saveRule = new Button("Save");
-        saveRule.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                rule.setName(textFieldName.getText());
-                rule.setDescription(textFieldDesc.getText());
-                rule.setRef(textFieldSource.getText());
-            }
+        saveRule.setOnAction(event -> {
+            rule.setName(textFieldName.getText());
+            rule.setDescription(textFieldDesc.getText());
+            rule.setRef(textFieldSource.getText());
         });
-        roleNodeChildren.add(saveRule);
+        ruleActions.getChildren().add(saveRule);*/
+
+        Button deleteRule = new Button("Delete");
+        deleteRule.setOnAction(event -> {
+            bpmnAnalyser.getRules().getRules().remove(rule);
+            refreshRuleList();
+        });
+        ruleActions.getChildren().add(deleteRule);
+
+        Button disableRule = new Button(rule.isActive() ? "Disable" : "Enable");
+        disableRule.setOnAction(event -> {
+            rule.setActive(!rule.isActive());
+            disableRule.setText(rule.isActive() ? "Disable" : "Enable");
+            rulePane.setStyle(rule.isActive() ? "-fx-color: lightgray" : "-fx-color: white");
+        });
+        ruleActions.getChildren().add(disableRule);
+
+        ruleNode.add(ruleActions, 1, rowC);
 
         return ruleNode;
 
     }
 
-    public void doBpmnAnalysisForFolder(String folderPath) {
-        try (Stream<Path> paths = Files.walk(Paths.get(folderPath))) {
-            paths.filter(Files::isRegularFile).forEach(this::doBpmnAnalysis);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
+    /**
+     * Create a new Tab and start the BPMN test for the given BPMN Modell
+     *
+     * @param filename - Path of the BPMN Model which should get analysed
+     */
     public void doBpmnAnalysis(Path filename) {
         Tab bpmntab = addTab(mainTab, filename.getFileName().toString(), filename.toString());
         SplitPane splitPaneTab = createSplitPane();
@@ -291,12 +467,18 @@ public class Main extends Application {
     }
 
 
+    /**
+     * Helper function - create a new horizontal SplitPane
+     */
     public SplitPane createSplitPane() {
         SplitPane splitPane = new SplitPane();
         splitPane.setOrientation(Orientation.HORIZONTAL);
         return splitPane;
     }
 
+    /**
+     * Helper function - create a new Tab
+     */
     public TabPane createTabPane() {
         TabPane tabPane = new TabPane();
         return tabPane;
@@ -311,20 +493,8 @@ public class Main extends Application {
         return newTab;
     }
 
-    public void setupLogArea(SplitPane splitPane, LogService logService) {
-        TextArea logArea = new TextArea("");
-        logArea.setEditable(false);
-        //logArea.setDisable(true);
-
-        logService.textArea = logArea;
-
-        splitPane.getItems().add(logArea);
-    }
-
     /**
      * Create a Result TableView for rules
-     *
-     * @return
      */
     private TableView createRuleResultTable() {
         TableView<ValidationResult> table = new TableView<>();
@@ -350,6 +520,9 @@ public class Main extends Application {
         return table;
     }
 
+    /**
+     * Create a Result TableView for metrics
+     */
     private TableView createMertricResultTable() {
         TableView<MetricResult> table = new TableView<>();
         table.setEditable(false);
@@ -364,7 +537,7 @@ public class Main extends Application {
         sourceColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getBpmnMetric().getRef()));
 
         TableColumn<MetricResult, String> resultColumn = new TableColumn<>("Result");
-        resultColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue() + ""));
+        resultColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getValue() + ""));
 
         TableColumn<MetricResult, String> trendColumn = new TableColumn<>("Trend");
         trendColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getBpmnMetric().getTrend().toString()));
@@ -374,8 +547,4 @@ public class Main extends Application {
         return table;
     }
 
-    private VBox createRuleList() {
-        VBox vBox = new VBox();
-        return vBox;
-    }
 }

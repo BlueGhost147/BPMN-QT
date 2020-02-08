@@ -29,7 +29,10 @@ public class RuleList {
             @XmlElement(name = "bpmnElementCountRule", type = BpmnElementCountRule.class),
             @XmlElement(name = "bpmnGatewayMergeRule", type = BpmnGatewayMergeRule.class),
             @XmlElement(name = "bpmnPoolProcessRule", type = BpmnPoolProcessRule.class),
-            @XmlElement(name = "bpmnXmlValidationRule", type = BpmnXmlValidationRule.class)
+            @XmlElement(name = "bpmnXmlValidationRule", type = BpmnXmlValidationRule.class),
+            @XmlElement(name = "bpmnMetricRule", type = BpmnMetricRule.class),
+            @XmlElement(name = "bpmnOntologyValidationRule", type = BpmnOntologyValidationRule.class),
+            @XmlElement(name = "bpmnSoundnessRule", type = BpmnSoundnessRule.class)
     })
     public void setRules(List<BpmnRule> rules) {
         this.rules = rules;

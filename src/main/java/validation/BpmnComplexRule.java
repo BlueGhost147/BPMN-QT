@@ -17,6 +17,13 @@ public class BpmnComplexRule extends BpmnRule {
     private RuleOperator operator;
 
     public BpmnComplexRule() {
+        bpmnRuleList = new ArrayList<>();
+    }
+
+    public BpmnComplexRule(String name, String description, String ref, RuleOperator operator) {
+        super(name, description, ref);
+        this.bpmnRuleList = new ArrayList<>();
+        this.operator = operator;
     }
 
     public BpmnComplexRule(String name, String description, String ref, List<BpmnRule> bpmnRuleList, RuleOperator operator) {
