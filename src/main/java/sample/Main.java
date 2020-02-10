@@ -260,15 +260,17 @@ public class Main extends Application {
 
     private Node createRuleTileContent(final BpmnRule rule, TitledPane rulePane) {
         GridPane ruleNode = new GridPane();
-        ruleNode.setHgap(5);
-        ruleNode.setVgap(5);
+
+
         ruleNode.setPadding(new Insets(5, 5, 5, 5));
         // ObservableList<Node> roleNodeChildren = ruleNode.getChildren();
 
         int rowC = 0;
 
         final Label labelName = new Label("Name");
+        labelName.setMinWidth(100);
         final TextField textFieldName = new TextField(rule.getName());
+        textFieldName.setMinWidth(300);
         textFieldName.textProperty().addListener((observable, oldValue, newValue) -> {
             rule.setName(newValue);
             rulePane.setText(newValue);

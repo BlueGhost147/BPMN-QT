@@ -32,19 +32,6 @@ public class BpmnToken {
         this.uuid = UUID.randomUUID();
     }
 
-    public boolean moveToken(FlowNode flowNode){
-        if(flowNode == null) throw new NullPointerException();
-        if (!path.stream().map(BaseElement::getId).collect(Collectors.toList()).contains(flowNode.getId()))
-        {
-            path.add(this.currentFlowNode);
-            this.currentFlowNode = flowNode;
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
     public FlowNode getCurrentFlowNode() {
         return currentFlowNode;
     }
