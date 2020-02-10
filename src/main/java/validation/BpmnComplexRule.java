@@ -40,18 +40,26 @@ public class BpmnComplexRule extends BpmnRule {
 
         switch (operator) {
             case AND:
-                valid = bpmnRuleList.stream().allMatch(rule -> {
+                valid = true;
+                for (BpmnRule rule : bpmnRuleList) {
                     ValidationResult ruleResult = rule.validate(modelInstance);
                     errors.addAll(ruleResult.getErrorMsg());
-                    return ruleResult.isValid();
-                });
+                    if (!ruleResult.isValid()) valid = false;
+                }
                 break;
             case OR:
+                valid = false;
+                for (BpmnRule rule : bpmnRuleList) {
+                    ValidationResult ruleResult = rule.validate(modelInstance);
+                    errors.addAll(ruleResult.getErrorMsg());
+                    if (ruleResult.isValid()) valid = true;
+                }
+                /*
                 valid = bpmnRuleList.stream().anyMatch(rule -> {
                     ValidationResult ruleResult = rule.validate(modelInstance);
                     errors.addAll(ruleResult.getErrorMsg());
                     return ruleResult.isValid();
-                });
+                });*/
                 break;
         }
 

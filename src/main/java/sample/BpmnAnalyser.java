@@ -2,6 +2,7 @@ package sample;
 
 import enums.Operators;
 import enums.RuleOperator;
+import enums.SequenceRuleType;
 import meric.BpmnMetric;
 import meric.ElementCountMetric;
 import meric.MetricResult;
@@ -59,17 +60,22 @@ public class BpmnAnalyser {
 
     public void createTestRules() {
         rules = new RuleList();
-        rules.getRules().add(new BpmnElementCountRule(
+
+        rules.getRules().add(new BpmnXmlValidationRule("Xml Schema valid", "The BPMN XML is valid", "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd", "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd"));
+
+        BpmnRule countRule1 = new BpmnElementCountRule(
                 "Start Event existiert",
                 "Jeder Prozess braucht mindestends ein StartEvent",
                 "",
-                1, Operators.moreEqual, StartEvent.class));
+                1, Operators.moreEqual, StartEvent.class);
+        rules.getRules().add(countRule1);
 
-        rules.getRules().add(new BpmnElementCountRule(
+        BpmnRule countRule2 = new BpmnElementCountRule(
                 "End Event existiert",
                 "Jeder Prozess braucht mindestends ein EndEvent",
                 "",
-                1, Operators.moreEqual, EndEvent.class));
+                1, Operators.moreEqual, EndEvent.class);
+        rules.getRules().add(countRule2);
 
         rules.getRules().add(new BpmnElementCountRule(
                 "Modellierungskonventionen - Aktivitäten",
@@ -77,7 +83,9 @@ public class BpmnAnalyser {
                 "https://www.ech.ch/de/dokument/fb5725cb-813f-47dc-8283-c04f9311a5b8",
                 15, Operators.less, Activity.class));
 
-        List<BpmnRule> rulesClone = new ArrayList<>(rules.getRules());
+        List<BpmnRule> rulesClone = new ArrayList<>();
+        rulesClone.add(countRule1);
+        rulesClone.add(countRule2);
         rules.getRules().add(new BpmnComplexRule("Complex test rule 1", "test ", "", rulesClone, RuleOperator.AND));
         rules.getRules().add(new BpmnComplexRule("Complex test rule 2", "test", "", rulesClone, RuleOperator.OR));
 
@@ -85,7 +93,19 @@ public class BpmnAnalyser {
 
         rules.getRules().add(new BpmnPoolProcessRule("Valid pool process", "In jedem aufgeklappten Pool wird genau ein vollständiger Prozess modelliert", "https://www.ech.ch/de/dokument/fb5725cb-813f-47dc-8283-c04f9311a5b8"));
 
-        rules.getRules().add(new BpmnXmlValidationRule("Xml Schema valid", "The BPMN XML is valid", "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd", "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd"));
+        rules.getRules().add(new BpmnSoundnessRule("BPMN Modell Soundness", "Korrektheit des Sequenzflusses", ""));
+
+        List<Class<? extends ModelElementInstance>> elements = new ArrayList<>();
+        elements.add(MessageFlow.class);
+        elements.add(SequenceFlow.class);
+        BpmnMetric bpmnMetric = new ElementCountMetric("Flowcount", "Total amount of Message- and SequenceFlows", "", Trend.LESS_BETTER, elements);
+        rules.getRules().add(new BpmnMetricRule("Max Flow Count", "Nicht mehr als 100 Flows", "", 100, Operators.less, bpmnMetric));
+
+        rules.getRules().add(new BpmnFlowSequenceRule("No direct SF from StartEvent to EndEvent","","",
+                EndEvent.class,StartEvent.class,SequenceRuleType.NOT_ALLOWED_PREDECESSOR));
+
+        rules.getRules().add(new BpmnFlowSequenceRule("No direct SF from StartEvent to ExclusiveGateway","","",
+                ExclusiveGateway.class,StartEvent.class,SequenceRuleType.NOT_ALLOWED_PREDECESSOR));
     }
 
     private void createTestMetrics() {

@@ -6,7 +6,6 @@ import org.xml.sax.SAXParseException;
 
 import javax.xml.XMLConstants;
 import javax.xml.transform.Source;
-import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -19,38 +18,38 @@ import java.util.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.stream.Collectors;
 
 public class BpmnXmlService {
 
-
+/*
     private static final String[] xmlSchemas = new String[]{
             //"https://www.omg.org/spec/BPMN/20100501/BPMN20.xsd",
             //"https://www.omg.org/spec/BPMN/20100501/BPMNDI.xsd",
             //"https://www.omg.org/spec/BPMN/20100501/DC.xsd",
             //"https://www.omg.org/spec/BPMN/20100501/DI.xsd",
             "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd"
-    };
+    };*/
 
-    public void validateXML(String xmlFilePath) {
-        //LogService.logEvent("BpmnXmlService", "Start XML Validation");
-        Arrays.stream(xmlSchemas).forEach(xmlSchema -> {
-            try {
-                List<SAXParseException> xmlExceptions = validateXml(loadXmlFile(xmlFilePath), xmlSchema);
-                //xmlExceptions.forEach(e -> LogService.logEvent("BpmnXmlService", e.getMessage()));
-            } catch (IOException | SAXException e) {
-               // LogService.logEvent("BpmnXmlService", e.getMessage());
-            }
-        });
+    private static final String xmlSchema = "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd";
 
-        //LogService.logLine("BpmnXmlService");
+    public List<String> validateXML(String xmlFilePath) {
+
+        try {
+            return validateXml(loadXmlFile(xmlFilePath), xmlSchema).stream().map(SAXException::getMessage).collect(Collectors.toList());
+        } catch (IOException | SAXException e) {
+            List<String> errors =  new ArrayList<>();
+            errors.add("Failed to load the XML file: "+e.getMessage());
+            return errors;
+        }
+
     }
-
 
 
     /**
      * Validate one XML File via a given Schema
      *
-     * @param xmlFile - Filesource of the XML file to validate
+     * @param xmlFile     - Filesource of the XML file to validate
      * @param xsdFilePath - Filepath of the XML schema
      * @throws MalformedURLException - URL of the Schema not valid
      * @throws SAXException          - Schema file failed to load

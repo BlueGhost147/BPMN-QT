@@ -26,12 +26,14 @@ import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.bpmn.instance.*;
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import service.BpmnModelService;
+import service.BpmnXmlService;
 import service.LogService;
 import validation.*;
 import service.XmlRuleImportExportService;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -93,8 +95,8 @@ public class Main extends Application {
                 new FileChooser.ExtensionFilter("BPMN Files", "*.bpmn")
         );
 
-        Button button = new Button("Select BPMN file");
-        button.setPadding(new Insets(5,5,5,5));
+        Button button = new Button("Load and validate BPMN");
+        button.setPadding(new Insets(5, 5, 5, 5));
         button.setOnAction(e -> {
             if (lastBpmnPath != null)
                 bpmnFileChooser.setInitialDirectory(lastBpmnPath);
@@ -187,6 +189,7 @@ public class Main extends Application {
             ruleTypesChoise.getItems().add(BpmnComplexRule.class);
             ruleTypesChoise.getItems().add(BpmnOntologyValidationRule.class);
             ruleTypesChoise.getItems().add(BpmnMetricRule.class);
+            ruleTypesChoise.getItems().add(BpmnFlowSequenceRule.class);
 
             // Set default value
             ruleTypesChoise.setValue(BpmnElementCountRule.class);
@@ -195,26 +198,25 @@ public class Main extends Application {
             addNewRule.setOnAction(event -> {
 
                 BpmnRule newRule = null;
-                if(ruleTypesChoise.getValue() == BpmnElementCountRule.class)
-                    newRule = new BpmnElementCountRule("New count rule","","",0,Operators.equal,Activity.class);
-                if(ruleTypesChoise.getValue() == BpmnGatewayMergeRule.class)
-                    newRule = new BpmnGatewayMergeRule("New gateway rule","","");
-                if(ruleTypesChoise.getValue() == BpmnXmlValidationRule.class)
-                    newRule = new BpmnXmlValidationRule("New xml validation rule","","","");
-                if(ruleTypesChoise.getValue() == BpmnSoundnessRule.class)
-                    newRule = new BpmnSoundnessRule("New soundness rule","","");
-                if(ruleTypesChoise.getValue() == BpmnPoolProcessRule.class)
-                    newRule = new BpmnPoolProcessRule("New valid pool rule","","");
-                if(ruleTypesChoise.getValue() == BpmnComplexRule.class)
-                    newRule = new BpmnComplexRule("New complex rule","","", RuleOperator.AND);
-                if(ruleTypesChoise.getValue() == BpmnOntologyValidationRule.class)
-                    newRule = new BpmnOntologyValidationRule("New ontology rule","","","");
-                if(ruleTypesChoise.getValue() == BpmnMetricRule.class)
-                    newRule = new BpmnMetricRule("New metric rule","","",0,Operators.equal,null);
+                if (ruleTypesChoise.getValue() == BpmnElementCountRule.class)
+                    newRule = new BpmnElementCountRule("New count rule", "", "", 0, Operators.equal, Activity.class);
+                if (ruleTypesChoise.getValue() == BpmnGatewayMergeRule.class)
+                    newRule = new BpmnGatewayMergeRule("New gateway rule", "", "");
+                if (ruleTypesChoise.getValue() == BpmnXmlValidationRule.class)
+                    newRule = new BpmnXmlValidationRule("New xml validation rule", "", "", "");
+                if (ruleTypesChoise.getValue() == BpmnSoundnessRule.class)
+                    newRule = new BpmnSoundnessRule("New soundness rule", "", "");
+                if (ruleTypesChoise.getValue() == BpmnPoolProcessRule.class)
+                    newRule = new BpmnPoolProcessRule("New valid pool rule", "", "");
+                if (ruleTypesChoise.getValue() == BpmnComplexRule.class)
+                    newRule = new BpmnComplexRule("New complex rule", "", "", RuleOperator.AND);
+                if (ruleTypesChoise.getValue() == BpmnOntologyValidationRule.class)
+                    newRule = new BpmnOntologyValidationRule("New ontology rule", "", "", "");
+                if (ruleTypesChoise.getValue() == BpmnMetricRule.class)
+                    newRule = new BpmnMetricRule("New metric rule", "", "", 0, Operators.equal, null);
 
 
-                if(newRule != null)
-                {
+                if (newRule != null) {
                     bpmnAnalyser.getRules().getRules().add(newRule);
                     refreshRuleList();
                 }
@@ -294,8 +296,7 @@ public class Main extends Application {
             textFieldXSD.textProperty().addListener((observable, oldValue, newValue) -> xmlValidationRule.setXsdPath(newValue));
             ruleNode.add(labelXSDPath, 0, rowC);
             ruleNode.add(textFieldXSD, 1, rowC++);
-        }
-        else if (rule instanceof BpmnOntologyValidationRule) {
+        } else if (rule instanceof BpmnOntologyValidationRule) {
             final BpmnOntologyValidationRule ontologyValidationRule = (BpmnOntologyValidationRule) rule;
 
             final Label labelOntologyPath = new Label("Ontology Path");
@@ -303,6 +304,27 @@ public class Main extends Application {
             textFieldOntology.textProperty().addListener((observable, oldValue, newValue) -> ontologyValidationRule.setOntologyPath(newValue));
             ruleNode.add(labelOntologyPath, 0, rowC);
             ruleNode.add(textFieldOntology, 1, rowC++);
+        }
+        else if(rule instanceof BpmnFlowSequenceRule)
+        {
+            final BpmnFlowSequenceRule bpmnFlowSequenceRule = (BpmnFlowSequenceRule) rule;
+
+            final Label labelElement = new Label("Element Type");
+            final ChoiceBox<Class<? extends FlowNode>> choiseBoxElement = createFlowNodeChoiceBox();
+            choiseBoxElement.setValue(bpmnFlowSequenceRule.getElementClass());
+            choiseBoxElement.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> bpmnFlowSequenceRule.setElementClass(newValue));
+
+            final Label labelElementPrev = new Label("Previous Type");
+            final ChoiceBox<Class<? extends FlowNode>> choiseBoxElementPrev = createFlowNodeChoiceBox();
+            choiseBoxElementPrev.setValue(bpmnFlowSequenceRule.getPreviousElementClass());
+            choiseBoxElementPrev.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> bpmnFlowSequenceRule.setElementClass(newValue));
+
+            ruleNode.add(labelElement, 0, rowC);
+            ruleNode.add(choiseBoxElement, 1, rowC++);
+
+            ruleNode.add(labelElementPrev, 0, rowC);
+            ruleNode.add(choiseBoxElementPrev, 1, rowC++);
+
         }
         else if (rule instanceof BpmnComplexRule) {
             final BpmnComplexRule complexRule = (BpmnComplexRule) rule;
@@ -362,16 +384,7 @@ public class Main extends Application {
             ruleNode.add(choiseBoxOperator, 1, rowC++);
 
             final Label labelElement = new Label("Element Type");
-            final ChoiceBox<Class<? extends ModelElementInstance>> choiseBoxElement = new ChoiceBox<>();
-            choiseBoxElement.getItems().add(Event.class);
-            choiseBoxElement.getItems().add(StartEvent.class);
-            choiseBoxElement.getItems().add(EndEvent.class);
-            choiseBoxElement.getItems().add(Gateway.class);
-            choiseBoxElement.getItems().add(ExclusiveGateway.class);
-            choiseBoxElement.getItems().add(ParallelGateway.class);
-            choiseBoxElement.getItems().add(Activity.class);
-            choiseBoxElement.getItems().add(Participant.class);
-            choiseBoxElement.getItems().add(SequenceFlow.class);
+            final ChoiceBox<Class<? extends ModelElementInstance>> choiseBoxElement = createElementChoiceBox();
             choiseBoxElement.setValue(bpmnElementCountRule.getElementClass());
             choiseBoxElement.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> bpmnElementCountRule.setElementClass(newValue));
 
@@ -461,6 +474,14 @@ public class Main extends Application {
                     tableViewMetric.setItems(resultListFX);
                 }
             }
+            else {
+                List<ValidationResult> resultsRules_XmlError = new ArrayList<>();
+                BpmnXmlService bpmnXmlService = new BpmnXmlService();
+                resultsRules_XmlError.add(new ValidationResult(new BpmnXmlValidationRule("XML Error", "The model failed to loaded, try xml validation", "",""),false, bpmnXmlService.validateXML(filename.toAbsolutePath().toString())));
+                ObservableList<ValidationResult> resultListFX = FXCollections.observableArrayList();
+                resultListFX.setAll(resultsRules_XmlError);
+                tableViewValidation.setItems(resultListFX);
+            }
 
         }).start();
 
@@ -546,5 +567,36 @@ public class Main extends Application {
 
         return table;
     }
+
+    private ChoiceBox<Class<? extends ModelElementInstance>> createElementChoiceBox()
+    {
+        ChoiceBox<Class<? extends ModelElementInstance>> choiceBox = new ChoiceBox<>();
+        choiceBox.getItems().add(Event.class);
+        choiceBox.getItems().add(StartEvent.class);
+        choiceBox.getItems().add(EndEvent.class);
+        choiceBox.getItems().add(Gateway.class);
+        choiceBox.getItems().add(ExclusiveGateway.class);
+        choiceBox.getItems().add(ParallelGateway.class);
+        choiceBox.getItems().add(Activity.class);
+        choiceBox.getItems().add(Participant.class);
+        choiceBox.getItems().add(SequenceFlow.class);
+
+        return choiceBox;
+    }
+
+    private ChoiceBox<Class<? extends FlowNode>> createFlowNodeChoiceBox()
+    {
+        ChoiceBox<Class<? extends FlowNode>> choiceBox = new ChoiceBox<>();
+        choiceBox.getItems().add(Event.class);
+        choiceBox.getItems().add(StartEvent.class);
+        choiceBox.getItems().add(EndEvent.class);
+        choiceBox.getItems().add(Gateway.class);
+        choiceBox.getItems().add(ExclusiveGateway.class);
+        choiceBox.getItems().add(ParallelGateway.class);
+        choiceBox.getItems().add(Activity.class);
+
+        return choiceBox;
+    }
+
 
 }

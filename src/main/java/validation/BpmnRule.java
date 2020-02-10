@@ -4,6 +4,7 @@ import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
+import java.util.Objects;
 
 @XmlRootElement
 public abstract class BpmnRule implements Serializable {
@@ -74,5 +75,22 @@ public abstract class BpmnRule implements Serializable {
     @Override
     public String toString() {
         return name + " - " + description;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BpmnRule)) return false;
+        BpmnRule bpmnRule = (BpmnRule) o;
+        return isActive() == bpmnRule.isActive() &&
+                Objects.equals(getName(), bpmnRule.getName()) &&
+                Objects.equals(getDescription(), bpmnRule.getDescription()) &&
+                Objects.equals(getRef(), bpmnRule.getRef());
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(getName(), getDescription(), getRef(), isActive());
     }
 }
