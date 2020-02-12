@@ -8,6 +8,7 @@ import java.util.List;
 public class ValidationResult {
     private boolean valid;
     private List<String> errorMsg;
+    private List<String> infoMsg;
     private BpmnRule rule;
     private ModelInstance modelInstance;
 
@@ -15,17 +16,24 @@ public class ValidationResult {
         this.valid = valid;
         this.rule = rule;
         this.errorMsg = new ArrayList<>();
+        this.infoMsg = new ArrayList<>();
     }
 
     public ValidationResult(BpmnRule rule, boolean valid, List<String> errorMsg) {
         this.valid = valid;
         this.rule = rule;
         this.errorMsg = errorMsg;
+        this.infoMsg = new ArrayList<>();
     }
 
     public void addError(String error)
     {
         errorMsg.add(error);
+    }
+
+    public void addInfo(String info)
+    {
+        infoMsg.add(info);
     }
 
     public boolean isValid() {
@@ -57,5 +65,15 @@ public class ValidationResult {
             fullErrorMsg.append(error).append("\n");
         }
         return fullErrorMsg.toString();
+    }
+
+    public String getFullInfoMsg()
+    {
+        StringBuilder fullInfoMsg = new StringBuilder();
+        for (String info : infoMsg)
+        {
+            fullInfoMsg.append(info).append("\n");
+        }
+        return fullInfoMsg.toString();
     }
 }

@@ -132,8 +132,9 @@ public class BpmnSoundnessRule extends BpmnRule {
         return flowNode.getOutgoing().stream().map(SequenceFlow::getTarget).collect(Collectors.toList());
     }
 
-    private List<BpmnToken> flowNodeListToTokenList(List<FlowNode> flowNodeList, List<FlowNode> path) {
-        return flowNodeList.stream().map(flowNode -> new BpmnToken(flowNode, new ArrayList<>(path))).collect(Collectors.toList());
+
+    private List<BpmnToken> moveTokenToMulitble(BpmnToken oldToken, List<FlowNode> newFlowNodes) {
+        return newFlowNodes.stream().map(newFlowNode -> oldToken.moveAndCloneToken(oldToken, newFlowNode)).collect(Collectors.toList());
     }
 
     /*
@@ -234,20 +235,16 @@ public class BpmnSoundnessRule extends BpmnRule {
             int position = activeFlowNode.getPath().indexOf(activeFlowNode.getCurrentFlowNode());
             if (position >= 0) {
                 // Loop detected !
-                for (int i = position + 1; i < activeFlowNode.getPath().size(); i++) {
+                for (int i = position; i < activeFlowNode.getPath().size(); i++) {
                     FlowNode flowNodeLoopPath = activeFlowNode.getPath().get(i);
-                    if(flowNodeLoopPath instanceof ExclusiveGateway || flowNodeLoopPath instanceof EventBasedGateway)
-                    {
-                        System.out.println("Loop with possible escape at "+flowNodeLoopPath.getName());
+                    if (flowNodeLoopPath instanceof ExclusiveGateway || flowNodeLoopPath instanceof EventBasedGateway) {
+                        System.out.println("Loop with possible escape at " + flowNodeLoopPath.getName());
                         return true;
                     }
                 }
                 errors.add("Livelock loop detected");
                 return false;
             }
-
-            activeFlowNode.getPath().add(activeFlowNode.getCurrentFlowNode());
-
         }
 
         boolean endCorrect = true;
@@ -274,35 +271,52 @@ public class BpmnSoundnessRule extends BpmnRule {
                 for (FlowNode flowNodeOutgoing : flowNodesOutgoing) {
                     activeFlowNodes.remove(activeFlowNode);
                     List<BpmnToken> newActiveFlowNodes = new ArrayList<>(activeFlowNodes);
-                    newActiveFlowNodes.add(new BpmnToken(flowNodeOutgoing, new ArrayList<>(activeFlowNode.getPath())));
-                    boolean subEndCorrect = checkNodePathToken(newActiveFlowNodes, errors, overflowCounter, waitingFlowNodes);
+                    newActiveFlowNodes.add(activeFlowNode.moveAndCloneToken(activeFlowNode,flowNodeOutgoing));
+                    boolean subEndCorrect = checkNodePathToken(newActiveFlowNodes, errors, overflowCounter, new ArrayList<>(waitingFlowNodes));
                     if (!subEndCorrect) endCorrect = false;
                 }
             } else if (activeFlowNode.getCurrentFlowNode() instanceof ParallelGateway) {
-                // Possible Join
 
-                // ToDo: fix joins
                 List<FlowNode> incomingFlowNodes = activeFlowNode.getCurrentFlowNode().getIncoming().stream().map(SequenceFlow::getSource).collect(Collectors.toList());
-                List<BpmnToken> joinCandidates = activeFlowNodes.stream().filter(flowNode -> flowNode.getCurrentFlowNode().getId().equals(activeFlowNode.getCurrentFlowNode().getId())).collect(Collectors.toList());
-                if (incomingFlowNodes.size() == joinCandidates.size()) {
-                    List<BpmnToken> newActiveFlowNodes = new ArrayList<>(activeFlowNodes);
-                    newActiveFlowNodes.removeAll(joinCandidates);
+                boolean continueSF = true;
+                //List<BpmnToken> newActiveFlowNodes = new ArrayList<>(activeFlowNodes);
+                //List<BpmnToken> newActiveFlowNodes = activeFlowNodes.stream().map(activeFlowNode2 -> new BpmnToken(activeFlowNode2)).collect(Collectors.toList());
 
+                // Check Possible Join
+                if (incomingFlowNodes.size() > 1) {
+                    // Join could happen
 
-                    newActiveFlowNodes.remove(activeFlowNode);
-                    newActiveFlowNodes.addAll(flowNodesOutgoing.stream().map(flowNode -> new BpmnToken(flowNode, new ArrayList<>(activeFlowNode.getPath()))).collect(Collectors.toList()));
+                    // Add waiting tokens and activeTokens which are joinable
+                    List<BpmnToken> joinCandidates = activeFlowNodes.stream().filter(flowNode -> flowNode.getCurrentFlowNode().getId().equals(activeFlowNode.getCurrentFlowNode().getId())).collect(Collectors.toList());
+                    joinCandidates.addAll(waitingFlowNodes.stream().filter(flowNode -> flowNode.getCurrentFlowNode().getId().equals(activeFlowNode.getCurrentFlowNode().getId())).collect(Collectors.toList()));
 
-                    boolean subEndCorrect = checkNodePathToken(newActiveFlowNodes, errors, overflowCounter, waitingFlowNodes);
+                    if (incomingFlowNodes.size() == joinCandidates.size()) {
+                        activeFlowNodes.removeAll(joinCandidates);
+
+                        //newActiveFlowNodes.addAll(flowNodesOutgoing.stream().map(flowNode -> new BpmnToken(flowNode, new ArrayList<>(activeFlowNode.getPath()))).collect(Collectors.toList()));
+
+                        //boolean subEndCorrect = checkNodePathToken(newActiveFlowNodes, errors, overflowCounter, waitingFlowNodes);
+                        //if (!subEndCorrect) endCorrect = false;
+                    }
+                    else {
+                        // The token has to wait, add to list for join
+                        waitingFlowNodes.add(activeFlowNode);
+                        continueSF = false;
+                    }
+                }
+
+                if (continueSF) {
+                    activeFlowNodes.remove(activeFlowNode);
+                    activeFlowNodes.addAll(moveTokenToMulitble(activeFlowNode, flowNodesOutgoing));
+
+                    boolean subEndCorrect = checkNodePathToken(activeFlowNodes, errors, overflowCounter, waitingFlowNodes);
                     if (!subEndCorrect) endCorrect = false;
                 }
-                else {
-                    // ToDo : Ref error
-                    waitingFlowNodes.add(activeFlowNode);
-                }
+
             } else if (!(activeFlowNode.getCurrentFlowNode() instanceof EndEvent)) {
                 activeFlowNodes.remove(activeFlowNode);
                 List<BpmnToken> newActiveFlowNodes = new ArrayList<>(activeFlowNodes);
-                newActiveFlowNodes.addAll(flowNodeListToTokenList(flowNodesOutgoing, activeFlowNode.getPath()));
+                newActiveFlowNodes.addAll(moveTokenToMulitble(activeFlowNode, flowNodesOutgoing));
 
                 boolean subEndCorrect = checkNodePathToken(newActiveFlowNodes, errors, overflowCounter, waitingFlowNodes);
                 if (!subEndCorrect) endCorrect = false;

@@ -22,7 +22,7 @@ public class BpmnToken {
 
     public BpmnToken(FlowNode currentFlowNode, List<FlowNode> path) {
         this.currentFlowNode = currentFlowNode;
-        this.path = path;
+        this.path = new ArrayList<>(path);
         this.uuid = UUID.randomUUID();
     }
 
@@ -30,6 +30,17 @@ public class BpmnToken {
         this.currentFlowNode = bpmnToken.getCurrentFlowNode();
         this.path = new ArrayList<>(bpmnToken.getPath());
         this.uuid = UUID.randomUUID();
+    }
+
+    public BpmnToken moveAndCloneToken(BpmnToken bpmnToken, FlowNode flowNode) {
+        BpmnToken newBpmnToken = new BpmnToken(bpmnToken);
+        newBpmnToken.getPath().add(newBpmnToken.getCurrentFlowNode());
+        newBpmnToken.setCurrentFlowNode(flowNode);
+        return newBpmnToken;
+    }
+
+    private void setCurrentFlowNode(FlowNode currentFlowNode) {
+        this.currentFlowNode = currentFlowNode;
     }
 
     public FlowNode getCurrentFlowNode() {

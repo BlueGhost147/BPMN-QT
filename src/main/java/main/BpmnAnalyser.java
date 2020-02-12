@@ -1,4 +1,4 @@
-package sample;
+package main;
 
 import enums.Operators;
 import enums.RuleOperator;
@@ -19,7 +19,6 @@ import validation.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class BpmnAnalyser {
 
@@ -86,8 +85,14 @@ public class BpmnAnalyser {
         List<BpmnRule> rulesClone = new ArrayList<>();
         rulesClone.add(countRule1);
         rulesClone.add(countRule2);
-        rules.getRules().add(new BpmnComplexRule("Complex test rule 1", "test ", "", rulesClone, RuleOperator.AND));
-        rules.getRules().add(new BpmnComplexRule("Complex test rule 2", "test", "", rulesClone, RuleOperator.OR));
+
+        BpmnComplexRule complexRule1 = new BpmnComplexRule("Complex test rule 1", "test ", "", rulesClone, RuleOperator.AND);
+        complexRule1.setActive(false);
+        rules.getRules().add(complexRule1);
+
+        BpmnComplexRule complexRule2 = new BpmnComplexRule("Complex test rule 2", "test", "", rulesClone, RuleOperator.OR);
+        complexRule2.setActive(false);
+        rules.getRules().add(complexRule2);
 
         rules.getRules().add(new BpmnGatewayMergeRule("Verzweigungen über Gateways", "Verzweigungen von Sequenzflüssen aus einer Aktivität erfolgen nicht direkt sondern über einen Gateway", "https://www.ech.ch/de/dokument/fb5725cb-813f-47dc-8283-c04f9311a5b8"));
 

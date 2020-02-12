@@ -1,11 +1,9 @@
-package sample;
+package main;
 
 import enums.Operators;
 import enums.RuleOperator;
 import javafx.application.Application;
 import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -20,7 +18,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import meric.BpmnMetric;
 import meric.MetricResult;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.bpmn.instance.*;
@@ -95,7 +92,7 @@ public class Main extends Application {
                 new FileChooser.ExtensionFilter("BPMN Files", "*.bpmn")
         );
 
-        Button button = new Button("Load and validate BPMN");
+        Button button = createButton("Load and validate BPMN");
         button.setPadding(new Insets(5, 5, 5, 5));
         button.setOnAction(e -> {
             if (lastBpmnPath != null)
@@ -135,7 +132,7 @@ public class Main extends Application {
             ruleActionLayout = new HBox();
             ruleActionLayout.setSpacing(5);
 
-            Button loadRules = new Button("Import rules");
+            Button loadRules = createButton("Import rules");
             loadRules.setOnAction(event -> {
                 if (lastRulePath != null)
                     ruleFileChooser.setInitialDirectory(lastRulePath.getParentFile());
@@ -147,7 +144,7 @@ public class Main extends Application {
                 }
 
             });
-            Button saveRules = new Button("Export rules");
+            Button saveRules = createButton("Export rules");
             saveRules.setOnAction(event -> {
                 if (lastRulePath != null)
                     ruleFileChooser.setInitialDirectory(lastRulePath.getParentFile());
@@ -159,13 +156,13 @@ public class Main extends Application {
                 }
             });
 
-            Button createTestRules = new Button("Create test rules");
+            Button createTestRules = createButton("Create test rules");
             createTestRules.setOnAction(event -> {
                 bpmnAnalyser.createTestRules();
                 refreshRuleList();
             });
 
-            Button clearRules = new Button("Clear rules");
+            Button clearRules = createButton("Clear rules");
             clearRules.setOnAction(event -> {
                 bpmnAnalyser.setRules(new RuleList());
                 refreshRuleList();
@@ -194,7 +191,7 @@ public class Main extends Application {
             // Set default value
             ruleTypesChoise.setValue(BpmnElementCountRule.class);
 
-            Button addNewRule = new Button("Add new rules");
+            Button addNewRule = createButton("Add new rules");
             addNewRule.setOnAction(event -> {
 
                 BpmnRule newRule = null;
@@ -236,7 +233,7 @@ public class Main extends Application {
             TitledPane ruleExpandable = new TitledPane();
             ruleExpandable.setText(rule.getName());
             ruleExpandable.setExpanded(false);
-            ruleExpandable.setStyle(rule.isActive() ? "-fx-color: lightgray" : "-fx-color: white");
+            ruleExpandable.setStyle(rule.isActive() ? "-fx-color: #a5d6a7" : "-fx-color: #ffab91");
             //if (!rule.isActive()) ruleExpandable.setStyle("-fx-strikethrough: true;");
 
             // Only one rule pane should be expanded at the same time
@@ -335,14 +332,11 @@ public class Main extends Application {
                 Label ruleLabel = new Label(ruleCR.getName());
 
 
-                Button rmRule = new Button("x");
-                rmRule.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent event) {
-                        complexRule.getBpmnRuleList().remove(rmRule);
-                        ruleLabel.setText("[removed] " + rule.getName());
-                        rmRule.setVisible(false);
-                    }
+                Button rmRule = createButton("x");
+                rmRule.setOnAction(event -> {
+                    complexRule.getBpmnRuleList().remove(rmRule);
+                    ruleLabel.setText("[removed] " + rule.getName());
+                    rmRule.setVisible(false);
                 });
                 ruleNode.add(rmRule, 0, rowC);
                 ruleNode.add(ruleLabel, 1, rowC++);
@@ -408,18 +402,18 @@ public class Main extends Application {
         });
         ruleActions.getChildren().add(saveRule);*/
 
-        Button deleteRule = new Button("Delete");
+        Button deleteRule = createButton("Delete");
         deleteRule.setOnAction(event -> {
             bpmnAnalyser.getRules().getRules().remove(rule);
             refreshRuleList();
         });
         ruleActions.getChildren().add(deleteRule);
 
-        Button disableRule = new Button(rule.isActive() ? "Disable" : "Enable");
+        Button disableRule = createButton(rule.isActive() ? "Disable" : "Enable");
         disableRule.setOnAction(event -> {
             rule.setActive(!rule.isActive());
             disableRule.setText(rule.isActive() ? "Disable" : "Enable");
-            rulePane.setStyle(rule.isActive() ? "-fx-color: lightgray" : "-fx-color: white");
+            rulePane.setStyle(rule.isActive() ? "-fx-color: #a5d6a7" : "-fx-color: #ffab91");
         });
         ruleActions.getChildren().add(disableRule);
 
@@ -600,5 +594,12 @@ public class Main extends Application {
         return choiceBox;
     }
 
+    private Button createButton(String label)
+    {
+        Button button = new Button(label);
+        button.setPadding(new Insets(5,5,5,5));
+        button.autosize();
+        return button;
+    }
 
 }
