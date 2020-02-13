@@ -88,9 +88,4 @@ public class BpmnElementCountRule extends BpmnRule {
     public void setElementClass(Class<? extends ModelElementInstance> elementClass) {
         this.elementClass = elementClass;
     }
-
-    @Override
-    public String toString() {
-        return super.toString() + " - " + elementClass + " " + operator + " " + count;
-    }
 }

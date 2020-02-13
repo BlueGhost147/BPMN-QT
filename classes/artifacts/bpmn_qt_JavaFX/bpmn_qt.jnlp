@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<jnlp spec="1.0" xmlns:jfx="http://javafx.com" href="bpmn_qt.jnlp">
+  <information>
+    <title>BPMN-Qt</title>
+    <vendor>Andreas Raith</vendor>
+    <description>bpmn-qt JavaFX</description>
+    <offline-allowed/>
+  </information>
+  <resources>
+    <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
+    <jar href="activation-1.1.jar" size="68969" download="eager" />
+    <jar href="bpmn_qt.jar" size="58880" download="eager" />
+    <jar href="camunda-bpmn-model-7.10.0-alpha4.jar" size="715615" download="eager" />
+    <jar href="camunda-cmmn-model-7.10.0-alpha4.jar" size="315258" download="eager" />
+    <jar href="camunda-commons-logging-1.6.0.jar" size="6354" download="eager" />
+    <jar href="camunda-commons-typed-values-1.6.0.jar" size="160005" download="eager" />
+    <jar href="camunda-commons-utils-1.6.0.jar" size="14784" download="eager" />
+    <jar href="camunda-dmn-model-7.10.0-alpha4.jar" size="246761" download="eager" />
+    <jar href="camunda-engine-7.10.0-alpha4.jar" size="3969251" download="eager" />
+    <jar href="camunda-engine-dmn-7.10.0-alpha4.jar" size="155934" download="eager" />
+    <jar href="camunda-engine-feel-api-7.10.0-alpha4.jar" size="6974" download="eager" />
+    <jar href="camunda-engine-feel-juel-7.10.0-alpha4.jar" size="200236" download="eager" />
+    <jar href="camunda-xml-model-7.10.0-alpha4.jar" size="177635" download="eager" />
+    <jar href="commons-email-1.5.jar" size="58625" download="eager" />
+    <jar href="commons-io-2.6.jar" size="228273" download="eager" />
+    <jar href="commons-logging-1.1.1.jar" size="65741" download="eager" />
+    <jar href="javax.mail-1.5.6.jar" size="644899" download="eager" />
+    <jar href="joda-time-2.1.jar" size="642121" download="eager" />
+    <jar href="mybatis-3.4.4.jar" size="1688921" download="eager" />
+    <jar href="slf4j-api-1.7.25.jar" size="46683" download="eager" />
+    <jar href="slf4j-nop-1.7.25.jar" size="6286" download="eager" />
+    <jar href="spring-asm-3.1.2.RELEASE.jar" size="57588" download="eager" />
+    <jar href="spring-beans-3.1.2.RELEASE.jar" size="635474" download="eager" />
+    <jar href="spring-core-3.1.2.RELEASE.jar" size="488758" download="eager" />
+  </resources>
+<security>
+  <all-permissions/>
+</security>
+  <jfx:javafx-desc  width="1200" height="800" main-class="main.Main"  name="bpmn-qt JavaFX" />
+  <update check="background"/>
+</jnlp>

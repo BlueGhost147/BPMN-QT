@@ -2,23 +2,27 @@ package validation;
 
 import enums.Operators;
 import meric.BpmnMetric;
+
+import meric.ElementCountMetric;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.*;
 
 @XmlRootElement(name = "bpmnMetricRule")
 public class BpmnMetricRule extends BpmnRule {
 
-    private int count;
+    private double amount;
     private Operators operator;
+
+
     private BpmnMetric metric;
 
     public BpmnMetricRule() {
     }
 
-    public BpmnMetricRule(String name, String description, String ref, int count, Operators operator, BpmnMetric metric) {
+    public BpmnMetricRule(String name, String description, String ref, int amount, Operators operator, BpmnMetric metric) {
         super(name, description, ref);
-        this.count = count;
+        this.amount = amount;
         this.operator = operator;
         this.metric = metric;
     }
@@ -37,26 +41,52 @@ public class BpmnMetricRule extends BpmnRule {
 
         switch (operator) {
             case less:
-                valid = metricValue < count;
+                valid = metricValue < amount;
                 break;
             case lessEqual:
-                valid = metricValue <= count;
+                valid = metricValue <= amount;
                 break;
             case equal:
-                valid = metricValue == count;
+                valid = metricValue == amount;
                 break;
             case moreEqual:
-                valid = metricValue >= count;
+                valid = metricValue >= amount;
                 break;
             case more:
-                valid = metricValue > count;
+                valid = metricValue > amount;
                 break;
         }
 
         ValidationResult result = new ValidationResult(this, valid);
         if (!valid) {
-            result.addError("The metric " + metric.getName() + " value for the model is " + metricValue + "! Rule: " + operator + " than " + count);
+            result.addError("The metric " + metric.getName() + " value for the model is " + metricValue + "! Rule: " + operator + " than " + amount);
         }
         return result;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
+
+    public Operators getOperator() {
+        return operator;
+    }
+
+    public void setOperator(Operators operator) {
+        this.operator = operator;
+    }
+
+    @XmlElements({
+            @XmlElement(type = ElementCountMetric.class, name = "elementCountMetric")})
+    public BpmnMetric getMetric() {
+        return metric;
+    }
+
+    public void setMetric(BpmnMetric metric) {
+        this.metric = metric;
     }
 }

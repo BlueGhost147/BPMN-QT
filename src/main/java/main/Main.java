@@ -2,6 +2,7 @@ package main;
 
 import enums.Operators;
 import enums.RuleOperator;
+import enums.SequenceRuleType;
 import javafx.application.Application;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
@@ -18,6 +19,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import meric.BpmnMetric;
 import meric.MetricResult;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.bpmn.instance.*;
@@ -58,6 +60,7 @@ public class Main extends Application {
     // Rule tabPane which is currently expanded ->
     // undo expanding if another pane gets expanded
     private TitledPane curentRuleExpandable;
+    private BpmnRule curentExpandedRule;
 
     // Rule list
     private HBox ruleActionLayout = null;
@@ -184,7 +187,6 @@ public class Main extends Application {
             ruleTypesChoise.getItems().add(BpmnSoundnessRule.class);
             ruleTypesChoise.getItems().add(BpmnPoolProcessRule.class);
             ruleTypesChoise.getItems().add(BpmnComplexRule.class);
-            ruleTypesChoise.getItems().add(BpmnOntologyValidationRule.class);
             ruleTypesChoise.getItems().add(BpmnMetricRule.class);
             ruleTypesChoise.getItems().add(BpmnFlowSequenceRule.class);
 
@@ -207,11 +209,10 @@ public class Main extends Application {
                     newRule = new BpmnPoolProcessRule("New valid pool rule", "", "");
                 if (ruleTypesChoise.getValue() == BpmnComplexRule.class)
                     newRule = new BpmnComplexRule("New complex rule", "", "", RuleOperator.AND);
-                if (ruleTypesChoise.getValue() == BpmnOntologyValidationRule.class)
-                    newRule = new BpmnOntologyValidationRule("New ontology rule", "", "", "");
                 if (ruleTypesChoise.getValue() == BpmnMetricRule.class)
                     newRule = new BpmnMetricRule("New metric rule", "", "", 0, Operators.equal, null);
-
+                if (ruleTypesChoise.getValue() == BpmnFlowSequenceRule.class)
+                    newRule = new BpmnFlowSequenceRule("New flow sequence rule", "", "", ExclusiveGateway.class, StartEvent.class, SequenceRuleType.NOT_ALLOWED_PREDECESSOR);
 
                 if (newRule != null) {
                     bpmnAnalyser.getRules().getRules().add(newRule);
@@ -232,8 +233,17 @@ public class Main extends Application {
         rules.getRules().forEach(rule -> {
             TitledPane ruleExpandable = new TitledPane();
             ruleExpandable.setText(rule.getName());
-            ruleExpandable.setExpanded(false);
-            ruleExpandable.setStyle(rule.isActive() ? "-fx-color: #a5d6a7" : "-fx-color: #ffab91");
+
+            if(curentExpandedRule == null || !curentExpandedRule.equals(rule))
+                ruleExpandable.setExpanded(false);
+            else {
+                ruleExpandable.setExpanded(true);
+                curentRuleExpandable = ruleExpandable;
+            }
+
+
+
+            ruleExpandable.setStyle(rule.isActive() ? "" : "-fx-color: #ffab91");
             //if (!rule.isActive()) ruleExpandable.setStyle("-fx-strikethrough: true;");
 
             // Only one rule pane should be expanded at the same time
@@ -243,9 +253,12 @@ public class Main extends Application {
                         curentRuleExpandable.setExpanded(false);
                     }
                     curentRuleExpandable = ruleExpandable;
+                    curentExpandedRule = rule;
                 } else {
-                    if (curentRuleExpandable == ruleExpandable)
+                    if (curentRuleExpandable == ruleExpandable) {
                         curentRuleExpandable = null;
+                        curentExpandedRule = null;
+                    }
                 }
             });
 
@@ -263,6 +276,10 @@ public class Main extends Application {
         // ObservableList<Node> roleNodeChildren = ruleNode.getChildren();
 
         int rowC = 0;
+
+        final Label ruleType = new Label(rule.getClass().getSimpleName());
+        ruleType.setStyle("-fx-font-weight: bold");
+        ruleNode.add(ruleType, 1, rowC++);
 
         final Label labelName = new Label("Name");
         labelName.setMinWidth(100);
@@ -295,7 +312,7 @@ public class Main extends Application {
             textFieldXSD.textProperty().addListener((observable, oldValue, newValue) -> xmlValidationRule.setXsdPath(newValue));
             ruleNode.add(labelXSDPath, 0, rowC);
             ruleNode.add(textFieldXSD, 1, rowC++);
-        } else if (rule instanceof BpmnOntologyValidationRule) {
+        } /*else if (rule instanceof BpmnOntologyValidationRule) {
             final BpmnOntologyValidationRule ontologyValidationRule = (BpmnOntologyValidationRule) rule;
 
             final Label labelOntologyPath = new Label("Ontology Path");
@@ -303,9 +320,7 @@ public class Main extends Application {
             textFieldOntology.textProperty().addListener((observable, oldValue, newValue) -> ontologyValidationRule.setOntologyPath(newValue));
             ruleNode.add(labelOntologyPath, 0, rowC);
             ruleNode.add(textFieldOntology, 1, rowC++);
-        }
-        else if(rule instanceof BpmnFlowSequenceRule)
-        {
+        }*/ else if (rule instanceof BpmnFlowSequenceRule) {
             final BpmnFlowSequenceRule bpmnFlowSequenceRule = (BpmnFlowSequenceRule) rule;
 
             final Label labelElement = new Label("Element Type");
@@ -318,30 +333,59 @@ public class Main extends Application {
             choiseBoxElementPrev.setValue(bpmnFlowSequenceRule.getPreviousElementClass());
             choiseBoxElementPrev.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> bpmnFlowSequenceRule.setElementClass(newValue));
 
+            final Label labelOperator = new Label("Rule type");
+            final ChoiceBox<SequenceRuleType> choiseBoxOperator = new ChoiceBox<>();
+            choiseBoxOperator.getItems().setAll(SequenceRuleType.values());
+            choiseBoxOperator.setValue(bpmnFlowSequenceRule.getSequenceRuleType());
+            choiseBoxOperator.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> bpmnFlowSequenceRule.setSequenceRuleType(newValue));
+            ruleNode.add(labelOperator, 0, rowC);
+            ruleNode.add(choiseBoxOperator, 1, rowC++);
+
             ruleNode.add(labelElement, 0, rowC);
             ruleNode.add(choiseBoxElement, 1, rowC++);
 
             ruleNode.add(labelElementPrev, 0, rowC);
             ruleNode.add(choiseBoxElementPrev, 1, rowC++);
 
-        }
-        else if (rule instanceof BpmnComplexRule) {
+        } else if (rule instanceof BpmnComplexRule) {
             final BpmnComplexRule complexRule = (BpmnComplexRule) rule;
 
             for (BpmnRule ruleCR : complexRule.getBpmnRuleList()) {
-                Label ruleLabel = new Label(ruleCR.getName());
-
+                Label ruleLabel = new Label(ruleCR.toString());
+                ruleLabel.setPadding(new Insets(5,5,5,5));
 
                 Button rmRule = createButton("x");
+                rmRule.setMinWidth(20);
                 rmRule.setOnAction(event -> {
-                    complexRule.getBpmnRuleList().remove(rmRule);
-                    ruleLabel.setText("[removed] " + rule.getName());
-                    rmRule.setVisible(false);
+                    complexRule.getBpmnRuleList().remove(ruleCR);
+                    refreshRuleList();
                 });
-                ruleNode.add(rmRule, 0, rowC);
-                ruleNode.add(ruleLabel, 1, rowC++);
+
+                HBox hBoxDisplayCRule = new HBox();
+                hBoxDisplayCRule.getChildren().add(rmRule);
+                hBoxDisplayCRule.getChildren().add(ruleLabel);
+
+                ruleNode.add(hBoxDisplayCRule, 1, rowC++);
 
             }
+
+            final ChoiceBox<BpmnRule> choiseRules = new ChoiceBox<>();
+            final Button addRuleToComplex = createButton("+");
+            addRuleToComplex.setMinWidth(20);
+
+            ObservableList<BpmnRule> ruleListFX = FXCollections.observableArrayList();
+            ruleListFX.setAll(bpmnAnalyser.getRules().getRules());
+            choiseRules.setItems(ruleListFX);
+
+            HBox hBoxAddRule = new HBox();
+            hBoxAddRule.getChildren().add(addRuleToComplex);
+            hBoxAddRule.getChildren().add(choiseRules);
+            ruleNode.add(hBoxAddRule, 1, rowC++);
+
+            addRuleToComplex.setOnAction(event -> {
+                complexRule.addBpmnRule(choiseRules.getValue());
+                refreshRuleList();
+            });
 
             final Label labelOperator = new Label("Operator");
             final ChoiceBox<RuleOperator> choiseBoxOperator = new ChoiceBox<>();
@@ -350,6 +394,47 @@ public class Main extends Application {
             choiseBoxOperator.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> complexRule.setOperator(newValue));
             ruleNode.add(labelOperator, 0, rowC);
             ruleNode.add(choiseBoxOperator, 1, rowC++);
+        } else if (rule instanceof BpmnMetricRule) {
+            final BpmnMetricRule bpmnMetricRule = (BpmnMetricRule) rule;
+
+            final Label labelCount = new Label("Amount");
+            TextField textFieldCount = new TextField(bpmnMetricRule.getAmount() + "");
+            textFieldCount.textProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue.equals("")) {
+                    textFieldCount.setText("0");
+                    bpmnMetricRule.setAmount(0);
+                } else {
+                    try {
+                        int newValInt = Integer.parseInt(newValue);
+                        bpmnMetricRule.setAmount(newValInt);
+                    } catch (NumberFormatException e) {
+                        textFieldCount.setText(oldValue);
+                    }
+                }
+            });
+            ruleNode.add(labelCount, 0, rowC);
+            ruleNode.add(textFieldCount, 1, rowC++);
+
+            final Label labelOperator = new Label("Operator");
+            final ChoiceBox<Operators> choiseBoxOperator = new ChoiceBox<>();
+            choiseBoxOperator.getItems().setAll(Operators.values());
+            choiseBoxOperator.setValue(bpmnMetricRule.getOperator());
+            choiseBoxOperator.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> bpmnMetricRule.setOperator(newValue));
+            ruleNode.add(labelOperator, 0, rowC);
+            ruleNode.add(choiseBoxOperator, 1, rowC++);
+
+            final Label labelElement = new Label("Bpmn metric");
+            final ChoiceBox<BpmnMetric> choiseBoxMetric = new ChoiceBox<>();
+            ObservableList<BpmnMetric> metricListFX = FXCollections.observableArrayList();
+            metricListFX.setAll(bpmnAnalyser.getMetrics());
+            choiseBoxMetric.setItems(metricListFX);
+            choiseBoxMetric.setValue(bpmnMetricRule.getMetric());
+            choiseBoxMetric.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> bpmnMetricRule.setMetric(newValue));
+
+            ruleNode.add(labelElement, 0, rowC);
+            ruleNode.add(choiseBoxMetric, 1, rowC++);
+
+
         } else if (rule instanceof BpmnElementCountRule) {
             final BpmnElementCountRule bpmnElementCountRule = (BpmnElementCountRule) rule;
 
@@ -413,7 +498,7 @@ public class Main extends Application {
         disableRule.setOnAction(event -> {
             rule.setActive(!rule.isActive());
             disableRule.setText(rule.isActive() ? "Disable" : "Enable");
-            rulePane.setStyle(rule.isActive() ? "-fx-color: #a5d6a7" : "-fx-color: #ffab91");
+            rulePane.setStyle(rule.isActive() ? "" : "-fx-color: #ffab91");
         });
         ruleActions.getChildren().add(disableRule);
 
@@ -469,11 +554,10 @@ public class Main extends Application {
                     resultListFX.setAll(resultsMetrics);
                     tableViewMetric.setItems(resultListFX);
                 }
-            }
-            else {
+            } else {
                 List<ValidationResult> resultsRules_XmlError = new ArrayList<>();
                 BpmnXmlService bpmnXmlService = new BpmnXmlService();
-                resultsRules_XmlError.add(new ValidationResult(new BpmnXmlValidationRule("XML Error", "The model failed to loaded, try xml validation", "",""),false, bpmnXmlService.validateXML(filename.toAbsolutePath().toString())));
+                resultsRules_XmlError.add(new ValidationResult(new BpmnXmlValidationRule("XML Error", "The model failed to loaded, try xml validation", "", ""), false, bpmnXmlService.validateXML(filename.toAbsolutePath().toString())));
                 ObservableList<ValidationResult> resultListFX = FXCollections.observableArrayList();
                 resultListFX.setAll(resultsRules_XmlError);
                 tableViewValidation.setItems(resultListFX);
@@ -564,8 +648,7 @@ public class Main extends Application {
         return table;
     }
 
-    private ChoiceBox<Class<? extends ModelElementInstance>> createElementChoiceBox()
-    {
+    private ChoiceBox<Class<? extends ModelElementInstance>> createElementChoiceBox() {
         ChoiceBox<Class<? extends ModelElementInstance>> choiceBox = new ChoiceBox<>();
         choiceBox.getItems().add(Event.class);
         choiceBox.getItems().add(StartEvent.class);
@@ -580,8 +663,7 @@ public class Main extends Application {
         return choiceBox;
     }
 
-    private ChoiceBox<Class<? extends FlowNode>> createFlowNodeChoiceBox()
-    {
+    private ChoiceBox<Class<? extends FlowNode>> createFlowNodeChoiceBox() {
         ChoiceBox<Class<? extends FlowNode>> choiceBox = new ChoiceBox<>();
         choiceBox.getItems().add(Event.class);
         choiceBox.getItems().add(StartEvent.class);
@@ -594,10 +676,9 @@ public class Main extends Application {
         return choiceBox;
     }
 
-    private Button createButton(String label)
-    {
+    private Button createButton(String label) {
         Button button = new Button(label);
-        button.setPadding(new Insets(5,5,5,5));
+        button.setPadding(new Insets(5, 5, 5, 5));
         button.autosize();
         return button;
     }

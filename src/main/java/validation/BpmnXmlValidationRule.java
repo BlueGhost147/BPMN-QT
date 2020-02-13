@@ -43,11 +43,6 @@ public class BpmnXmlValidationRule extends BpmnRule {
         }
     }
 
-    @Override
-    public String toString() {
-        return "XmlValidation - " + super.toString() + " - XSD Source: " + xsdPath;
-    }
-
     public String getXsdPath() {
         return xsdPath;
     }

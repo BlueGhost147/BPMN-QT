@@ -59,8 +59,4 @@ public class BpmnGatewayMergeRule extends BpmnRule {
         this.bpmnService = bpmnService;
     }
 
-    @Override
-    public String toString() {
-        return super.toString();
-    }
 }

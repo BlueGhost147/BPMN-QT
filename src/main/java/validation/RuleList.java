@@ -31,7 +31,6 @@ public class RuleList {
             @XmlElement(name = "bpmnPoolProcessRule", type = BpmnPoolProcessRule.class),
             @XmlElement(name = "bpmnXmlValidationRule", type = BpmnXmlValidationRule.class),
             @XmlElement(name = "bpmnMetricRule", type = BpmnMetricRule.class),
-            @XmlElement(name = "bpmnOntologyValidationRule", type = BpmnOntologyValidationRule.class),
             @XmlElement(name = "bpmnSoundnessRule", type = BpmnSoundnessRule.class),
             @XmlElement(name = "bpmnFlowSequenceRule", type = BpmnFlowSequenceRule.class)
     })

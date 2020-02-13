@@ -1,0 +1,43 @@
+<html><head>
+  <SCRIPT src="http://java.com/js/dtjava.js"></SCRIPT>
+<script>
+    function launchApplication(jnlpfile) {
+        dtjava.launch(            {
+                url : 'bpmn_qt.jnlp'
+            },
+            {
+                javafx : '8.0+'
+            },
+            {}
+        );
+        return false;
+    }
+</script>
+
+<script>
+    function javafxEmbedbpmn_qt_id() {
+        dtjava.embed(
+            {
+                id : 'bpmn_qt_id',
+                url : 'bpmn_qt.jnlp',
+                placeholder : 'javafx-app-placeholder',
+                width : '1200',
+                height : '800'
+            },
+            {
+                javafx : '8.0+'
+            },
+            {}
+        );
+    }
+    <!-- Embed FX application into web page once page is loaded -->
+    dtjava.addOnloadCallback(javafxEmbedbpmn_qt_id);
+</script>
+
+</head><body>
+<h2>Test page for <b>bpmn-qt JavaFX</b></h2>
+  <b>Webstart:</b> <a href='bpmn_qt.jnlp' onclick="return launchApplication('bpmn_qt.jnlp');">click to launch this app as webstart</a><br><hr><br>
+
+  <!-- Applet will be inserted here -->
+  <div id='javafx-app-placeholder'></div>
+</body></html>

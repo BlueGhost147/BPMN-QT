@@ -74,7 +74,7 @@ public abstract class BpmnRule implements Serializable {
 
     @Override
     public String toString() {
-        return name + " - " + description;
+        return this.getClass().getSimpleName() + " - " + name + " - " + description;
     }
 
     @Override

@@ -82,8 +82,7 @@ public class BpmnComplexRule extends BpmnRule {
         this.operator = operator;
     }
 
-    @Override
-    public String toString() {
-        return super.toString() + " - Set of " + bpmnRuleList.size() + " rules.";
+    public void addBpmnRule(BpmnRule bpmnRule) {
+        this.bpmnRuleList.add(bpmnRule);
     }
 }

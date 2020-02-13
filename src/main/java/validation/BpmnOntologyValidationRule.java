@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @XmlRootElement(name = "bpmnOntologyValidationRule")
+@Deprecated
 public class BpmnOntologyValidationRule extends BpmnRule {
 
     private String ontologyPath;

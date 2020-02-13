@@ -55,8 +55,4 @@ public class BpmnPoolProcessRule extends BpmnRule {
         return new ValidationResult(this, errors.size() == 0, errors);
     }
 
-    @Override
-    public String toString() {
-        return super.toString();
-    }
 }

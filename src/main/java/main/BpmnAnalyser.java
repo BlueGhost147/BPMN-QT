@@ -80,7 +80,7 @@ public class BpmnAnalyser {
                 "Modellierungskonventionen - Aktivitäten",
                 "Maximal 9 – 15 Aktivitäten (Ausprägungen siehe Kapitel 4.6) pro Diagramm.",
                 "https://www.ech.ch/de/dokument/fb5725cb-813f-47dc-8283-c04f9311a5b8",
-                15, Operators.less, Activity.class));
+                15, Operators.lessEqual, Activity.class));
 
         List<BpmnRule> rulesClone = new ArrayList<>();
         rulesClone.add(countRule1);
@@ -100,12 +100,11 @@ public class BpmnAnalyser {
 
         rules.getRules().add(new BpmnSoundnessRule("BPMN Modell Soundness", "Korrektheit des Sequenzflusses", ""));
 
-        List<Class<? extends ModelElementInstance>> elements = new ArrayList<>();
-        elements.add(MessageFlow.class);
-        elements.add(SequenceFlow.class);
-        BpmnMetric bpmnMetric = new ElementCountMetric("Flowcount", "Total amount of Message- and SequenceFlows", "", Trend.LESS_BETTER, elements);
-        rules.getRules().add(new BpmnMetricRule("Max Flow Count", "Nicht mehr als 100 Flows", "", 100, Operators.less, bpmnMetric));
 
+        if(metrics != null && metrics.size()>3) {
+            BpmnMetric bpmnMetric = metrics.get(3);
+            rules.getRules().add(new BpmnMetricRule("Max Flow Count", "Nicht mehr als 100 Flows", "", 100, Operators.less, bpmnMetric));
+        }
         rules.getRules().add(new BpmnFlowSequenceRule("No direct SF from StartEvent to EndEvent","","",
                 EndEvent.class,StartEvent.class,SequenceRuleType.NOT_ALLOWED_PREDECESSOR));
 
@@ -180,5 +179,9 @@ public class BpmnAnalyser {
 
     public void setRules(RuleList rules) {
         this.rules = rules;
+    }
+
+    public List<BpmnMetric> getMetrics() {
+        return metrics;
     }
 }
