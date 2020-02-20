@@ -11,6 +11,7 @@ public class BpmnToken {
     private List<FlowNode> path;
     private Set<FlowNode> visitedNodes;
     private UUID uuid;
+    private boolean loop = false;
 
     public BpmnToken(FlowNode currentFlowNode) {
         this.currentFlowNode = currentFlowNode;
@@ -25,6 +26,7 @@ public class BpmnToken {
         this.path = new ArrayList<>(bpmnToken.getPath());
         this.uuid = UUID.randomUUID();
         this.visitedNodes = new HashSet<>(bpmnToken.getVisitedNodes());
+        this.loop = bpmnToken.isLoop();
     }
 
     public BpmnToken moveAndCloneToken(BpmnToken bpmnToken, FlowNode flowNode) {
@@ -62,6 +64,14 @@ public class BpmnToken {
 
     public void joinVisitedNodes(Set<FlowNode> visitedNodesOther) {
         this.visitedNodes.addAll(visitedNodesOther);
+    }
+
+    public boolean isLoop() {
+        return loop;
+    }
+
+    public void setLoop(boolean loop) {
+        this.loop = loop;
     }
 
     @Override
