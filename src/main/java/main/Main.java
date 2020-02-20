@@ -202,7 +202,7 @@ public class Main extends Application {
                 if (ruleTypesChoise.getValue() == BpmnGatewayMergeRule.class)
                     newRule = new BpmnGatewayMergeRule("New gateway rule", "", "");
                 if (ruleTypesChoise.getValue() == BpmnXmlValidationRule.class)
-                    newRule = new BpmnXmlValidationRule("New xml validation rule", "", "", "");
+                    newRule = new BpmnXmlValidationRule("New xml validation rule", "", "", "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd");
                 if (ruleTypesChoise.getValue() == BpmnSoundnessRule.class)
                     newRule = new BpmnSoundnessRule("New soundness rule", "", "");
                 if (ruleTypesChoise.getValue() == BpmnPoolProcessRule.class)
@@ -659,7 +659,8 @@ public class Main extends Application {
         choiceBox.getItems().add(Activity.class);
         choiceBox.getItems().add(Participant.class);
         choiceBox.getItems().add(SequenceFlow.class);
-
+        choiceBox.getItems().add(FlowNode.class);
+        choiceBox.getItems().add(ModelElementInstance.class);
         return choiceBox;
     }
 
@@ -672,7 +673,7 @@ public class Main extends Application {
         choiceBox.getItems().add(ExclusiveGateway.class);
         choiceBox.getItems().add(ParallelGateway.class);
         choiceBox.getItems().add(Activity.class);
-
+        choiceBox.getItems().add(FlowNode.class);
         return choiceBox;
     }
 

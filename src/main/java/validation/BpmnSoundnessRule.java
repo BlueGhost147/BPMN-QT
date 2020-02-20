@@ -229,6 +229,8 @@ public class BpmnSoundnessRule extends BpmnRule {
                     boolean subEndCorrect = checkNodePathToken(newActiveFlowNodes, errors, overflowCounter, new ArrayList<>(waitingFlowNodes), termEndEvents, new TerminationToken());
                     if (!subEndCorrect) endCorrect = false;
                 }
+                // Decision taken
+                activeFlowNodes.clear();
             } else if (activeFlowNode.getCurrentFlowNode() instanceof ParallelGateway) {
 
                 List<FlowNode> incomingFlowNodes = activeFlowNode.getCurrentFlowNode().getIncoming().stream().map(SequenceFlow::getSource).collect(Collectors.toList());
