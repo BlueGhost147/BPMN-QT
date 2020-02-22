@@ -47,9 +47,9 @@ public class BpmnPoolProcessRule extends BpmnRule {
 
             if (startEventCount == 0 && endEventCount == 0)
                 errors.add("The pool " + ((Participant) pool).getName() + " has a process with no start and end events");
-            if (startEventCount == 0)
+            else if (startEventCount == 0)
                 errors.add("The pool " + ((Participant) pool).getName() + " has a process with no start events");
-            if (endEventCount == 0)
+            else if (endEventCount == 0)
                 errors.add("The pool " + ((Participant) pool).getName() + " has a process with no end events");
         });
         return new ValidationResult(this, errors.size() == 0, errors);

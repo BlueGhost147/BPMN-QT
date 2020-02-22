@@ -1,10 +1,15 @@
 package validation;
 
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import service.BpmnModelService;
+import service.BpmnService;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @XmlRootElement
 public abstract class BpmnRule implements Serializable {
@@ -38,7 +43,19 @@ public abstract class BpmnRule implements Serializable {
      * @param modelInstance - Model which should be validated
      * @return boolean - True if the rule has been validated
      */
-   public abstract ValidationResult validate(BpmnModelInstance modelInstance);
+    public abstract ValidationResult validate(BpmnModelInstance modelInstance);
+
+    public ValidationResult validate(String modelPath) {
+         Optional<BpmnModelInstance> modelInstanceOptional = BpmnModelService.loadDiagram(modelPath, null);
+         if(modelInstanceOptional.isPresent()){
+             return validate(modelInstanceOptional.get());
+         }
+         else {
+             List<String> errors = new ArrayList<>();
+             errors.add("Model failed to load");
+             return new ValidationResult(this, false, errors);
+         }
+    }
 
     public String getName() {
         return name;

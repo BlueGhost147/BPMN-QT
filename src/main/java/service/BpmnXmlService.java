@@ -31,9 +31,13 @@ public class BpmnXmlService {
             "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd"
     };*/
 
-    private static final String xmlSchema = "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd";
+    private static final String xmlSchemaDefault = "https://www.omg.org/spec/BPMN/20100501/BPMN20.xsd";
 
     public List<String> validateXML(String xmlFilePath) {
+        return validateXML(xmlFilePath, xmlSchemaDefault);
+    }
+
+    public List<String> validateXML(String xmlFilePath, String xmlSchema) {
 
         try {
             return validateXml(loadXmlFile(xmlFilePath), xmlSchema).stream().map(SAXException::getMessage).collect(Collectors.toList());

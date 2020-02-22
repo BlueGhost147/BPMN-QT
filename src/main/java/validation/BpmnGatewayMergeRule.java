@@ -38,7 +38,7 @@ public class BpmnGatewayMergeRule extends BpmnRule {
                     .filter(flowNode -> !(flowNode instanceof Gateway))
                     .filter(flowNode -> ((FlowNode) flowNode).getIncoming().size() > 1 ||
                             ((FlowNode) flowNode).getOutgoing().size() > 1)
-                    .map(flowNode -> "The element " + ((FlowNode) flowNode).getName() + " of the type " + flowNode.getClass() + " is used to merge or split the sequence flow")
+                    .map(flowNode -> "The element " + ((FlowNode) flowNode).getName() + " of the type " + flowNode.getClass().getSimpleName() + " is used to merge or split the sequence flow")
                     .collect(Collectors.toList());
 
             return new ValidationResult(this, errors.size() == 0, errors);

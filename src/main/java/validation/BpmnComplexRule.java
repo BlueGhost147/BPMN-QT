@@ -42,6 +42,10 @@ public class BpmnComplexRule extends BpmnRule {
             case AND:
                 valid = true;
                 for (BpmnRule rule : bpmnRuleList) {
+                    if(rule == this) {
+                        errors.add("Recursion in complex rule detected: "+rule.getName() + " was ignored");
+                        continue;
+                    }
                     ValidationResult ruleResult = rule.validate(modelInstance);
                     errors.addAll(ruleResult.getErrorMsg());
                     if (!ruleResult.isValid()) valid = false;
@@ -50,6 +54,10 @@ public class BpmnComplexRule extends BpmnRule {
             case OR:
                 valid = false;
                 for (BpmnRule rule : bpmnRuleList) {
+                    if(rule == this) {
+                        errors.add("Recursion in complex rule detected: "+rule.getName() + " was ignored");
+                        continue;
+                    }
                     ValidationResult ruleResult = rule.validate(modelInstance);
                     errors.addAll(ruleResult.getErrorMsg());
                     if (ruleResult.isValid()) valid = true;

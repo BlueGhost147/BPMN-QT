@@ -20,7 +20,7 @@ import validation.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BpmnAnalyser {
+public class BpmnRuleEngine {
 
     private BpmnModelService bpmnModelService;
     private BpmnService bpmnService;
@@ -29,7 +29,7 @@ public class BpmnAnalyser {
     private RuleList rules;
     private List<BpmnMetric> metrics;
 
-    public BpmnAnalyser() {
+    public BpmnRuleEngine() {
         bpmnModelService = new BpmnModelService();
         bpmnService = new BpmnService();
         bpmnXmlService = new BpmnXmlService();
@@ -40,19 +40,19 @@ public class BpmnAnalyser {
     }
 
     public List<ValidationResult> analyseModelValidation(BpmnModelInstance bpmnModelInstance, LogService logService) {
-        logService.logEvent("BpmnAnalyser", "Start rule engine");
+        logService.logEvent("BpmnRuleEngine", "Start rule engine");
         List<ValidationResult> results = validateModel(bpmnModelInstance, logService);
         if (results != null)
-            logService.logEvent("BpmnAnalyser", "Finished validation, validated " + results.size() + " rules!");
+            logService.logEvent("BpmnRuleEngine", "Finished validation, validated " + results.size() + " rules!");
 
         return results;
     }
 
     public List<MetricResult> analyseModelMetrics(BpmnModelInstance bpmnModelInstance, LogService logService) {
-        logService.logEvent("BpmnAnalyser", "Start metric engine");
+        logService.logEvent("BpmnRuleEngine", "Start metric engine");
         List<MetricResult> results = calculateMetrics(bpmnModelInstance, logService);
         if (results != null)
-            logService.logEvent("BpmnAnalyser", "Finished metric calculation, calculated " + results.size() + " metrics!");
+            logService.logEvent("BpmnRuleEngine", "Finished metric calculation, calculated " + results.size() + " metrics!");
 
         return results;
     }
@@ -60,7 +60,7 @@ public class BpmnAnalyser {
     public void createTestRules() {
         rules = new RuleList();
 
-        rules.getRules().add(new BpmnXmlValidationRule("Xml Schema valid", "The BPMN XML is valid", "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd", "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd"));
+        rules.getRules().add(new BpmnXmlValidationRule("Xml Schema valid", "The BPMN XML is valid", "https://www.omg.org/spec/BPMN/20100501/BPMN20.xsd", "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd"));
 
         BpmnRule countRule1 = new BpmnElementCountRule(
                 "Start Event existiert",
@@ -86,11 +86,11 @@ public class BpmnAnalyser {
         rulesClone.add(countRule1);
         rulesClone.add(countRule2);
 
-        BpmnComplexRule complexRule1 = new BpmnComplexRule("Complex test rule 1", "test ", "", rulesClone, RuleOperator.AND);
+        BpmnComplexRule complexRule1 = new BpmnComplexRule("Complex test rule 1", "test ", "", new ArrayList<>(rulesClone), RuleOperator.AND);
         complexRule1.setActive(false);
         rules.getRules().add(complexRule1);
 
-        BpmnComplexRule complexRule2 = new BpmnComplexRule("Complex test rule 2", "test", "", rulesClone, RuleOperator.OR);
+        BpmnComplexRule complexRule2 = new BpmnComplexRule("Complex test rule 2", "test", "", new ArrayList<>(rulesClone), RuleOperator.OR);
         complexRule2.setActive(false);
         rules.getRules().add(complexRule2);
 
@@ -143,17 +143,19 @@ public class BpmnAnalyser {
 
     public List<ValidationResult> validateModel(BpmnModelInstance bpmnModelInstance, LogService logService) {
         List<ValidationResult> results = new ArrayList<>();
+
+
         rules.getRules()
                 .stream().filter(BpmnRule::isActive)
                 .forEach(bpmnRule -> {
-                    logService.logEvent("BpmnAnalyser", "Try to validate " + bpmnRule.getName());
+                    logService.logEvent("BpmnRuleEngine", "Try to validate " + bpmnRule.getName());
                     ValidationResult validationResult = bpmnRule.validate(bpmnModelInstance);
                     results.add(validationResult);
 
                     if (validationResult.isValid()) {
-                        logService.logEvent("BpmnAnalyser", "Validated " + bpmnRule.getName() + " successfully!");
+                        logService.logEvent("BpmnRuleEngine", "Validated " + bpmnRule.getName() + " successfully!");
                     } else {
-                        logService.logEvent("BpmnAnalyser", "Validation for " + bpmnRule.getName() + " failed!\nErrors:\n" + validationResult.getFullErrorMsg());
+                        logService.logEvent("BpmnRuleEngine", "Validation for " + bpmnRule.getName() + " failed!\nErrors:\n" + validationResult.getFullErrorMsg());
                     }
 
                 });
@@ -167,7 +169,7 @@ public class BpmnAnalyser {
             MetricResult metricResult = metric.calculate(bpmnModelInstance);
             results.add(metricResult);
 
-            logService.logEvent("BpmnAnalyser", "Calculated " + metric.getName() + " - " + metricResult.getValue());
+            logService.logEvent("BpmnRuleEngine", "Calculated " + metric.getName() + " - " + metricResult.getValue());
         });
 
         return results;

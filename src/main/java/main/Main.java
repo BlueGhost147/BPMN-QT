@@ -7,8 +7,6 @@ import javafx.application.Application;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
@@ -39,7 +37,7 @@ import java.util.Optional;
 public class Main extends Application {
 
     // Bpmn analyse instance
-    private BpmnAnalyser bpmnAnalyser;
+    private BpmnRuleEngine bpmnRuleEngine;
 
     // Tabpane of the application
     private TabPane mainTab;
@@ -73,28 +71,34 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
 
+        // Prepare window
         primaryStage.setTitle("BPMN QT");
-
         this.primaryStage = primaryStage;
-
         mainTab = createTabPane();
 
+        // Create primary tab for settings
         SplitPane splitPane = createSplitPane();
         Tab tab = addTab(mainTab, "Log & Rules", "Rules and Settings");
         tab.setClosable(false);
         tab.setContent(splitPane);
 
+        // Show window
         primaryStage.setScene(new Scene(mainTab, 1000, 600));
-        LogService mainTabLogService = new LogService();
-
         primaryStage.show();
 
-        // Create File chooser
+        // Create File chooser for BPMN Files
         FileChooser bpmnFileChooser = new FileChooser();
         bpmnFileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("BPMN Files", "*.bpmn")
         );
 
+        // Create File chooser for Rules Files
+        ruleFileChooser = new FileChooser();
+        ruleFileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("QT rule files", "*.qtrules")
+        );
+
+        // Prepare load BPMN Model Button
         Button button = createButton("Load and validate BPMN");
         button.setPadding(new Insets(5, 5, 5, 5));
         button.setOnAction(e -> {
@@ -112,17 +116,16 @@ public class Main extends Application {
         splitPane.getItems().add(settingsBox);
 
         // Initiate rule engine
-        bpmnAnalyser = new BpmnAnalyser();
-        //bpmnAnalyser.createTestRules();
+        bpmnRuleEngine = new BpmnRuleEngine();
 
+        // Setup rule list
         ruleList = new VBox();
-        ruleFileChooser = new FileChooser();
-        ruleFileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("QT rule files", "*.qtrules")
-        );
         refreshRuleList();
 
-        splitPane.getItems().add(ruleList);
+        ScrollPane scrollRuleList = new ScrollPane();
+        scrollRuleList.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollRuleList.setContent(ruleList);
+        splitPane.getItems().add(scrollRuleList);
     }
 
     /**
@@ -142,7 +145,7 @@ public class Main extends Application {
                 File selectedFile = ruleFileChooser.showOpenDialog(primaryStage);
                 lastRulePath = selectedFile;
                 if (selectedFile != null) {
-                    bpmnAnalyser.setRules(XmlRuleImportExportService.loadRulesFromXML(selectedFile.getAbsolutePath()));
+                    bpmnRuleEngine.setRules(XmlRuleImportExportService.loadRulesFromXML(selectedFile.getAbsolutePath()));
                     refreshRuleList();
                 }
 
@@ -155,19 +158,19 @@ public class Main extends Application {
 
                 if (saveFile != null) {
                     lastRulePath = saveFile;
-                    XmlRuleImportExportService.saveRulesToXML(bpmnAnalyser.getRules(), saveFile.getPath());
+                    XmlRuleImportExportService.saveRulesToXML(bpmnRuleEngine.getRules(), saveFile.getPath());
                 }
             });
 
             Button createTestRules = createButton("Create test rules");
             createTestRules.setOnAction(event -> {
-                bpmnAnalyser.createTestRules();
+                bpmnRuleEngine.createTestRules();
                 refreshRuleList();
             });
 
             Button clearRules = createButton("Clear rules");
             clearRules.setOnAction(event -> {
-                bpmnAnalyser.setRules(new RuleList());
+                bpmnRuleEngine.setRules(new RuleList());
                 refreshRuleList();
             });
 
@@ -202,7 +205,7 @@ public class Main extends Application {
                 if (ruleTypesChoise.getValue() == BpmnGatewayMergeRule.class)
                     newRule = new BpmnGatewayMergeRule("New gateway rule", "", "");
                 if (ruleTypesChoise.getValue() == BpmnXmlValidationRule.class)
-                    newRule = new BpmnXmlValidationRule("New xml validation rule", "", "", "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd");
+                    newRule = new BpmnXmlValidationRule("New xml validation rule", "", "", "https://www.omg.org/spec/BPMN/20100501/BPMN20.xsd");
                 if (ruleTypesChoise.getValue() == BpmnSoundnessRule.class)
                     newRule = new BpmnSoundnessRule("New soundness rule", "", "");
                 if (ruleTypesChoise.getValue() == BpmnPoolProcessRule.class)
@@ -215,7 +218,7 @@ public class Main extends Application {
                     newRule = new BpmnFlowSequenceRule("New flow sequence rule", "", "", ExclusiveGateway.class, StartEvent.class, SequenceRuleType.NOT_ALLOWED_PREDECESSOR);
 
                 if (newRule != null) {
-                    bpmnAnalyser.getRules().getRules().add(newRule);
+                    bpmnRuleEngine.getRules().getRules().add(newRule);
                     refreshRuleList();
                 }
 
@@ -229,7 +232,7 @@ public class Main extends Application {
         ruleList.getChildren().add(newRuleLayout);
 
         // Display rules
-        RuleList rules = bpmnAnalyser.getRules();
+        RuleList rules = bpmnRuleEngine.getRules();
         rules.getRules().forEach(rule -> {
             TitledPane ruleExpandable = new TitledPane();
             ruleExpandable.setText(rule.getName());
@@ -268,6 +271,9 @@ public class Main extends Application {
         });
     }
 
+    /**
+     * Create a tile to edit a single rule
+     */
     private Node createRuleTileContent(final BpmnRule rule, TitledPane rulePane) {
         GridPane ruleNode = new GridPane();
 
@@ -374,7 +380,7 @@ public class Main extends Application {
             addRuleToComplex.setMinWidth(20);
 
             ObservableList<BpmnRule> ruleListFX = FXCollections.observableArrayList();
-            ruleListFX.setAll(bpmnAnalyser.getRules().getRules());
+            ruleListFX.setAll(bpmnRuleEngine.getRules().getRules());
             choiseRules.setItems(ruleListFX);
 
             HBox hBoxAddRule = new HBox();
@@ -408,7 +414,14 @@ public class Main extends Application {
                         int newValInt = Integer.parseInt(newValue);
                         bpmnMetricRule.setAmount(newValInt);
                     } catch (NumberFormatException e) {
-                        textFieldCount.setText(oldValue);
+                        try {
+                            int oldValueInt = Integer.parseInt(oldValue);
+                            textFieldCount.setText(oldValueInt+"");
+                            bpmnMetricRule.setAmount(oldValueInt);
+                        } catch (NumberFormatException e2) {
+                            textFieldCount.setText("0");
+                            bpmnMetricRule.setAmount(0);
+                        }
                     }
                 }
             });
@@ -426,7 +439,7 @@ public class Main extends Application {
             final Label labelElement = new Label("Bpmn metric");
             final ChoiceBox<BpmnMetric> choiseBoxMetric = new ChoiceBox<>();
             ObservableList<BpmnMetric> metricListFX = FXCollections.observableArrayList();
-            metricListFX.setAll(bpmnAnalyser.getMetrics());
+            metricListFX.setAll(bpmnRuleEngine.getMetrics());
             choiseBoxMetric.setItems(metricListFX);
             choiseBoxMetric.setValue(bpmnMetricRule.getMetric());
             choiseBoxMetric.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> bpmnMetricRule.setMetric(newValue));
@@ -478,18 +491,9 @@ public class Main extends Application {
         HBox ruleActions = new HBox();
         ruleActions.setSpacing(10);
 
-        /*
-        Button saveRule = new Button("Save");
-        saveRule.setOnAction(event -> {
-            rule.setName(textFieldName.getText());
-            rule.setDescription(textFieldDesc.getText());
-            rule.setRef(textFieldSource.getText());
-        });
-        ruleActions.getChildren().add(saveRule);*/
-
         Button deleteRule = createButton("Delete");
         deleteRule.setOnAction(event -> {
-            bpmnAnalyser.getRules().getRules().remove(rule);
+            bpmnRuleEngine.getRules().getRules().remove(rule);
             refreshRuleList();
         });
         ruleActions.getChildren().add(deleteRule);
@@ -510,7 +514,6 @@ public class Main extends Application {
 
     /**
      * Create a new Tab and start the BPMN test for the given BPMN Modell
-     *
      * @param filename - Path of the BPMN Model which should get analysed
      */
     public void doBpmnAnalysis(Path filename) {
@@ -539,7 +542,7 @@ public class Main extends Application {
             Optional<BpmnModelInstance> modelInstanceOpt = BpmnModelService.loadDiagram(filename.toAbsolutePath().toString(), logService);
 
             if (modelInstanceOpt.isPresent()) {
-                List<ValidationResult> resultsRules = bpmnAnalyser.analyseModelValidation(modelInstanceOpt.get(), logService);
+                List<ValidationResult> resultsRules = bpmnRuleEngine.analyseModelValidation(modelInstanceOpt.get(), logService);
 
                 if (resultsRules != null) {
                     ObservableList<ValidationResult> resultListFX = FXCollections.observableArrayList();
@@ -547,7 +550,7 @@ public class Main extends Application {
                     tableViewValidation.setItems(resultListFX);
                 }
 
-                List<MetricResult> resultsMetrics = bpmnAnalyser.analyseModelMetrics(modelInstanceOpt.get(), logService);
+                List<MetricResult> resultsMetrics = bpmnRuleEngine.analyseModelMetrics(modelInstanceOpt.get(), logService);
 
                 if (resultsMetrics != null) {
                     ObservableList<MetricResult> resultListFX = FXCollections.observableArrayList();
@@ -648,35 +651,76 @@ public class Main extends Application {
         return table;
     }
 
+    /**
+     * Create a choisebox for BPMN Elements
+     */
     private ChoiceBox<Class<? extends ModelElementInstance>> createElementChoiceBox() {
         ChoiceBox<Class<? extends ModelElementInstance>> choiceBox = new ChoiceBox<>();
         choiceBox.getItems().add(Event.class);
         choiceBox.getItems().add(StartEvent.class);
         choiceBox.getItems().add(EndEvent.class);
+        choiceBox.getItems().add(IntermediateCatchEvent.class);
+        choiceBox.getItems().add(IntermediateThrowEvent.class);
+
         choiceBox.getItems().add(Gateway.class);
         choiceBox.getItems().add(ExclusiveGateway.class);
         choiceBox.getItems().add(ParallelGateway.class);
+        choiceBox.getItems().add(EventBasedGateway.class);
+        choiceBox.getItems().add(ComplexGateway.class);
+        choiceBox.getItems().add(InclusiveGateway.class);
+
         choiceBox.getItems().add(Activity.class);
+        choiceBox.getItems().add(Task.class);
+        choiceBox.getItems().add(SubProcess.class);
+
         choiceBox.getItems().add(Participant.class);
+
         choiceBox.getItems().add(SequenceFlow.class);
+        choiceBox.getItems().add(MessageFlow.class);
+
+        choiceBox.getItems().add(DataObject.class);
+        choiceBox.getItems().add(DataStore.class);
+        choiceBox.getItems().add(Message.class);
+
         choiceBox.getItems().add(FlowNode.class);
+        choiceBox.getItems().add(FlowNode.class);
+
+        choiceBox.getItems().add(FlowNode.class);
+
         choiceBox.getItems().add(ModelElementInstance.class);
         return choiceBox;
     }
 
+    /**
+     * Create a choisebox for BPMN FlowNodes
+     */
     private ChoiceBox<Class<? extends FlowNode>> createFlowNodeChoiceBox() {
         ChoiceBox<Class<? extends FlowNode>> choiceBox = new ChoiceBox<>();
         choiceBox.getItems().add(Event.class);
         choiceBox.getItems().add(StartEvent.class);
         choiceBox.getItems().add(EndEvent.class);
+        choiceBox.getItems().add(IntermediateCatchEvent.class);
+        choiceBox.getItems().add(IntermediateThrowEvent.class);
+
         choiceBox.getItems().add(Gateway.class);
         choiceBox.getItems().add(ExclusiveGateway.class);
         choiceBox.getItems().add(ParallelGateway.class);
+        choiceBox.getItems().add(EventBasedGateway.class);
+        choiceBox.getItems().add(ComplexGateway.class);
+        choiceBox.getItems().add(InclusiveGateway.class);
+
         choiceBox.getItems().add(Activity.class);
+        choiceBox.getItems().add(Task.class);
+        choiceBox.getItems().add(SubProcess.class);
+
         choiceBox.getItems().add(FlowNode.class);
+
         return choiceBox;
     }
 
+    /**
+     * Helperfunction to create a simple button with a given label
+     */
     private Button createButton(String label) {
         Button button = new Button(label);
         button.setPadding(new Insets(5, 5, 5, 5));

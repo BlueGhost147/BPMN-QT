@@ -43,11 +43,11 @@ public class BpmnFlowSequenceRule extends BpmnRule {
                                 FlowNode source = incomingSF.getSource();
                                 if (sequenceRuleType == SequenceRuleType.NOT_ALLOWED_PREDECESSOR) {
                                     if (previousElementClass.isInstance(source)) {
-                                        errors.add("The element " + ((FlowNode) flowNode).getName() + " has the predecessor " + source.getName() + " of type " + source.getClass().getName());
+                                        errors.add("The element " + ((FlowNode) flowNode).getName() + "(" + ((FlowNode) flowNode).getClass().getSimpleName() + ")" + " has the predecessor " + source.getName() + " of type " + source.getClass().getSimpleName());
                                     }
                                 } else if (sequenceRuleType == SequenceRuleType.NEEDS_PREDECESSOR) {
-                                    if (! previousElementClass.isInstance(source)) {
-                                        errors.add("The element " + ((FlowNode) flowNode).getName() + " has the predecessor " + source.getName() + " of type " + source.getClass().getName());
+                                    if (!previousElementClass.isInstance(source)) {
+                                        errors.add("The element " + ((FlowNode) flowNode).getName() + "(" + ((FlowNode) flowNode).getClass().getSimpleName() + ")" + " has the predecessor " + source.getName() + " of type " + source.getClass().getSimpleName());
 
                                     }
                                 }

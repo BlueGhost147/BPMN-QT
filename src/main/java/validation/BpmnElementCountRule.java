@@ -59,7 +59,7 @@ public class BpmnElementCountRule extends BpmnRule {
 
         ValidationResult result = new ValidationResult(this, valid);
         if (!valid) {
-            result.addError("The element " + elementClass + " exists " + elementCount + " times in the model! Rule: " + operator + " than " + count);
+            result.addError("The element " + elementClass.getSimpleName() + " exists " + elementCount + " times in the model! Rule: " + operator + " than " + count);
         }
         return result;
 

@@ -10,11 +10,13 @@ import java.util.Optional;
 public class BpmnModelService {
     /**
      * Loads a BPMN Model from a given path
+     *
      * @param pathname - Path of the BPMN Model
      * @return Loaded BpmnModelInstance
      */
     public static Optional<BpmnModelInstance> loadDiagram(String pathname, LogService logService) {
-        logService.logEvent("BpmnModelService", "Try to load diagram from " + pathname);
+        if (logService != null)
+            logService.logEvent("BpmnModelService", "Try to load diagram from " + pathname);
         try {
             // Load file
             File bpmnModelFile = new File(pathname);
@@ -23,11 +25,13 @@ public class BpmnModelService {
             // DOM validation
             Bpmn.validateModel(bpmnModelInstance);
 
-            logService.logEvent("BpmnModelService", "Loaded successful");
+            if (logService != null)
+                logService.logEvent("BpmnModelService", "Loaded successful");
 
             return Optional.of(bpmnModelInstance);
         } catch (ModelParseException saxE) {
-            logService.logEvent("BpmnModelService", "Error while loading: " + saxE.getMessage());
+            if (logService != null)
+                logService.logEvent("BpmnModelService", "Error while loading: " + saxE.getMessage());
             return Optional.empty();
         }
 
