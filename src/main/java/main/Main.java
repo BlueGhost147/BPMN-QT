@@ -637,16 +637,16 @@ public class Main extends Application {
         TableColumn<MetricResult, String> descColumn = new TableColumn<>("Description");
         descColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getBpmnMetric().getDescription()));
 
-        TableColumn<MetricResult, String> sourceColumn = new TableColumn<>("Source");
-        sourceColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getBpmnMetric().getRef()));
-
         TableColumn<MetricResult, String> resultColumn = new TableColumn<>("Result");
         resultColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getValue() + ""));
 
         TableColumn<MetricResult, String> trendColumn = new TableColumn<>("Trend");
         trendColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getBpmnMetric().getTrend().toString()));
 
-        table.getColumns().addAll(nameColum, descColumn, sourceColumn, resultColumn, trendColumn);
+        TableColumn<MetricResult, String> sourceColumn = new TableColumn<>("Source");
+        sourceColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getBpmnMetric().getRef()));
+
+        table.getColumns().addAll(nameColum, descColumn, resultColumn, trendColumn, sourceColumn);
 
         return table;
     }

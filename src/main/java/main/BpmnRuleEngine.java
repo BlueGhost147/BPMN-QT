@@ -3,10 +3,7 @@ package main;
 import enums.Operators;
 import enums.RuleOperator;
 import enums.SequenceRuleType;
-import meric.BpmnMetric;
-import meric.ElementCountMetric;
-import meric.MetricResult;
-import meric.Trend;
+import meric.*;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.bpmn.instance.*;
 
@@ -60,7 +57,7 @@ public class BpmnRuleEngine {
     public void createTestRules() {
         rules = new RuleList();
 
-        rules.getRules().add(new BpmnXmlValidationRule("Xml Schema valid", "The BPMN XML is valid", "https://www.omg.org/spec/BPMN/20100501/BPMN20.xsd", "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd"));
+        rules.getRules().add(new BpmnXmlValidationRule("Xml Schema valid", "The BPMN XML is valid", "https://www.omg.org/spec/BPMN/20100501/BPMN20.xsd", "https://www.omg.org/spec/BPMN/20100501/BPMN20.xsd"));
 
         BpmnRule countRule1 = new BpmnElementCountRule(
                 "Start Event existiert",
@@ -96,7 +93,7 @@ public class BpmnRuleEngine {
 
         rules.getRules().add(new BpmnGatewayMergeRule("Verzweigungen über Gateways", "Verzweigungen von Sequenzflüssen aus einer Aktivität erfolgen nicht direkt sondern über einen Gateway", "https://www.ech.ch/de/dokument/fb5725cb-813f-47dc-8283-c04f9311a5b8"));
 
-        rules.getRules().add(new BpmnPoolProcessRule("Valid pool process", "In jedem aufgeklappten Pool wird genau ein vollständiger Prozess modelliert", "https://www.ech.ch/de/dokument/fb5725cb-813f-47dc-8283-c04f9311a5b8"));
+        rules.getRules().add(new BpmnPoolProcessRule("Pool besitzen einen korrekten Prozess", "In jedem aufgeklappten Pool wird genau ein vollständiger Prozess modelliert", "https://www.ech.ch/de/dokument/fb5725cb-813f-47dc-8283-c04f9311a5b8"));
 
         rules.getRules().add(new BpmnSoundnessRule("BPMN Modell Soundness", "Korrektheit des Sequenzflusses", ""));
 
@@ -105,10 +102,10 @@ public class BpmnRuleEngine {
             BpmnMetric bpmnMetric = metrics.get(3);
             rules.getRules().add(new BpmnMetricRule("Max Flow Count", "Nicht mehr als 100 Flows", "", 100, Operators.less, bpmnMetric));
         }
-        rules.getRules().add(new BpmnFlowSequenceRule("No direct SF from StartEvent to EndEvent","","",
+        rules.getRules().add(new BpmnFlowSequenceRule("Kein direkter Sequenzfluss von StartEvent zu EndEvent","","",
                 EndEvent.class,StartEvent.class,SequenceRuleType.NOT_ALLOWED_PREDECESSOR));
 
-        rules.getRules().add(new BpmnFlowSequenceRule("No direct SF from StartEvent to ExclusiveGateway","","",
+        rules.getRules().add(new BpmnFlowSequenceRule("Kein direkter Sequenzfluss von StartEvent zu ExclusiveGateway","","",
                 ExclusiveGateway.class,StartEvent.class,SequenceRuleType.NOT_ALLOWED_PREDECESSOR));
     }
 
@@ -139,6 +136,13 @@ public class BpmnRuleEngine {
         List<Class<? extends ModelElementInstance>> flowNodeClasses = new ArrayList<>();
         flowNodeClasses.add(FlowNode.class);
         metrics.add(new ElementCountMetric("NOFn", "Number of flow nodes", "", Trend.LESS_BETTER, flowNodeClasses));
+
+        metrics.add(new SequenceFlowSplitMetric("SequenceFlow split count","Gives a indication how complex the sequence flow is by dividing the amount of sequence flows through the amount of flow nodes(start & end * 0.5)","",Trend.LESS_BETTER));
+        metrics.add(new CognitiveWeightsMetric("Cognitive complexity measure","Cognitive effort required t understand the model","V. Gruhn and R. Laue, “Adopting the Cognitive\n" +
+                "Complexity Measure for Business Process\n" +
+                "Models,” 5th IEEE International Conference on\n" +
+                "Cognitive Informatics, 2006. ICCI 2006, Vol. 1.\n" +
+                "IEEE, 2006b, pp. 236–241. \n----------changed by----------\nM. Sadowska, „An Approach to Assessing the Quality of Business Process Models Expressed in BPMN,“ e-Informatica Software Engineering Journal\nBd. 9, Nr. 1, pp. 55-77, 2015.  ",Trend.LESS_BETTER));
     }
 
     public List<ValidationResult> validateModel(BpmnModelInstance bpmnModelInstance, LogService logService) {

@@ -37,7 +37,7 @@ public class BpmnMetricRule extends BpmnRule {
             return validationResult;
         }
 
-        int metricValue = metric.calculate(modelInstance).getValue();
+        double metricValue = metric.calculate(modelInstance).getValue();
 
         switch (operator) {
             case less:

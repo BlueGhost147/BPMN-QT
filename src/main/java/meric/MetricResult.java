@@ -1,15 +1,15 @@
 package meric;
 
 public class MetricResult {
-    private int value;
+    private double value;
     private BpmnMetric bpmnMetric;
 
-    public MetricResult(int value, BpmnMetric bpmnMetric) {
+    public MetricResult(double value, BpmnMetric bpmnMetric) {
         this.value = value;
         this.bpmnMetric = bpmnMetric;
     }
 
-    public int getValue() {
+    public double getValue() {
         return value;
     }
 
